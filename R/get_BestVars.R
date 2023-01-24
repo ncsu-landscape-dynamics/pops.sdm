@@ -1,6 +1,6 @@
 #' @export
 
-var.select <- function(envi, pts){
+get_BestVars <- function(envi, pts){
   # require(biomod2)
   # require(plyr)
   # require(raster)
