@@ -3,6 +3,9 @@
 #          threshold, f.score, #threshold creates a thresholded version of the output. f.score allows user to tune this threshold to their use
 #          envi, var.select, #envi allows user to supply own environmental data. var.select allows for turning off variable selection algorithm
 #          bbox, output) #bbox allows user to set own extent, default is sized by extent of the data. output allows for saving outputs locally
+
+#' @export
+
 run_SDM <- function(spname, usa=F){
   # require(biomod2)
   # require(plyr)
