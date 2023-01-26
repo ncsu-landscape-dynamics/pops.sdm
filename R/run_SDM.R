@@ -5,12 +5,7 @@
 #          bbox, output) #bbox allows user to set own extent, default is sized by extent of the data. output allows for saving outputs locally
 run_SDM <- function(spname, usa=F){
   # require(biomod2)
-  # require(digest)
-  # require(dismo)
-  # require(downloader)
   # require(plyr)
-  # require(rgdal)
-  # require(scales)
   # require(stringr)
   # require(terra)
   # source('C:\\Users\\bjselige\\host_map\\get_Envi.R')
