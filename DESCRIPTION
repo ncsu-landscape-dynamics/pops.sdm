@@ -2,7 +2,10 @@ Package: pops.sdm
 Title: Automated Species Distribution Modeling
 Version: 0.0.0.9000
 Authors@R: 
-    person("Benjamin", "Seliger", , "first.last@example.com", role = c("aut", "cre"),
+    person(given = "Benjamin",
+           family = "Seliger", ,
+           email = "bjselige@ncsu.edu",
+           role = c("aut", "cre"),
            comment = c(ORCID = "YOUR-ORCID-ID"))
 Description: What the package does (one paragraph).
 Imports: 
