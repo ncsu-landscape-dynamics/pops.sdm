@@ -5,6 +5,14 @@ Authors@R:
     person("Benjamin", "Seliger", , "first.last@example.com", role = c("aut", "cre"),
            comment = c(ORCID = "YOUR-ORCID-ID"))
 Description: What the package does (one paragraph).
+Imports: 
+    biomod2,
+    geodata,
+    plyr,
+    raster (>= 3.5-15),
+    stringr,
+    terra (>= 1.5-17),
+    
 License: `use_mit_license()`, `use_gpl3_license()` or friends to pick a
     license
 Encoding: UTF-8
