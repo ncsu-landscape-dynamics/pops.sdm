@@ -3,7 +3,6 @@
 #          threshold, f.score, #threshold creates a thresholded version of the output. f.score allows user to tune this threshold to their use
 #          envi, var.select, #envi allows user to supply own environmental data. var.select allows for turning off variable selection algorithm
 #          bbox, output) #bbox allows user to set own extent, default is sized by extent of the data. output allows for saving outputs locally
-
 #' @export
 
 run_SDM <- function(spname, usa=F){
@@ -55,12 +54,12 @@ run_SDM <- function(spname, usa=F){
   #### 3.0 Define options and parameters for modeling ####
   myOptions <- biomod2::BIOMOD_ModelingOptions()
   myData <- biodmod2::BIOMOD_FormatingData(resp.var = myResp,
-                                 expl.var = myExpl.sel,
-                                 resp.xy = myRespXY,
-                                 resp.name = myName,
-                                 PA.nb.rep = 1,
-                                 PA.strategy = 'random',
-                                 PA.nb.absences = sum(myResp, na.rm=T))
+                                           expl.var = myExpl.sel,
+                                           resp.xy = myRespXY,
+                                           resp.name = myName,
+                                           PA.nb.rep = 1,
+                                           PA.strategy = 'random',
+                                           PA.nb.absences = sum(myResp, na.rm=T))
   # Notes on algorithm choice; CTA is redundant with Random Forest, FDA and SRE have relatively low performance
   myAlgos <- c('GLM', 'GAM', 'GBM', 'RF', 'ANN', 'MAXENT.Phillips')#,MARS)#'CTA', 'FDA', 'SRE',  'MAXENT.Phillips','MAXENT.Phillips.2'
   # Notes on evaluation methods : POD/SR/FR is not useful, KAPPA, ACCURACY, TSS, and ETS all get about the same results.
@@ -84,55 +83,49 @@ run_SDM <- function(spname, usa=F){
 
   #### 5.0 Ensembling the models ####
   myEnsemble <- biomod2::BIOMOD_EnsembleModeling(modeling.output = myModels,
-                                        chosen.models = 'all',
-                                        em.by = 'PA_dataset+repet',
-                                        eval.metric = NULL,
-                                        #eval.metric.quality.threshold = .5,
-                                        models.eval.meth= myEvals,
-                                        prob.mean = T,
-                                        prob.cv = F, #don't use'
-                                        prob.ci = F, #prob.ci.alpha = 0.05,
-                                        prob.median = F,
-                                        committee.averaging = F,
-                                        prob.mean.weight = F, # leave on true
-                                        prob.mean.weight.decay = 'proportional')
+                                                 chosen.models = 'all',
+                                                 em.by = 'PA_dataset+repet',
+                                                 eval.metric = NULL,
+                                                 #eval.metric.quality.threshold = .5,
+                                                 models.eval.meth= myEvals,
+                                                 prob.mean = T,
+                                                 prob.cv = F, #don't use'
+                                                 prob.ci = F, #prob.ci.alpha = 0.05,
+                                                 prob.median = F,
+                                                 committee.averaging = F,
+                                                 prob.mean.weight = F, # leave on true
+                                                 prob.mean.weight.decay = 'proportional')
   myEvalEM <- biomod2::get_evaluations(myEnsemble)[[1]] # get evaluation scores
 
   #### 6.0 projection over the globe under current conditions ####
   myProj <- biomod2::BIOMOD_Projection(modeling.output = myModels,
-                              new.env = myExpl.sel,
-                              proj.name = 'current',
-                              selected.models = 'all',
-                              binary.meth = myEvals,
-                              compress = 'xz',
-                              clamping.mask = F,
-                              output.format = '.grd',
-                              do.stack=T)
+                                       new.env = myExpl.sel,
+                                       proj.name = 'current',
+                                       selected.models = 'all',
+                                       binary.meth = myEvals,
+                                       compress = 'xz',
+                                       clamping.mask = F,
+                                       output.format = '.grd',
+                                       do.stack=T)
   myProj2 <- biomod2::get_predictions(myProj) # if you want to make custom plots, you can also get the projected map
 
   myBinary <- plyr::llply(.data=c(1:length(myEvals)),
-                    .fun=function(X){X.Eval <- myEvals[[X]]
-                    X.Binary <- stack(paste(tolower(str_replace(spname, ' ', '.')), '\\proj_current\\proj_current_',
-                                            tolower(str_replace(spname, ' ', '.')), '_', X.Eval, 'bin.grd', sep=''))
-                    names(X.Binary) <- paste(X.Eval, substr(myProj@models.projected, nchar(spname)+1, max(nchar(myProj@models.projected))), sep='')
-                    return(X.Binary)}); myBinary <- stack(unlist(myBinary))
-
-  # myBinary <-stack(paste(tolower(str_replace(spname, ' ', '.')), '\\proj_current\\proj_current_',
-  #                        tolower(str_replace(spname, ' ', '.')), '_', myEvals, 'bin.grd', sep=''))
-  # names(myBinary) <- rep(paste(myEvals, substr(myModels@models.computed, 15, 27), sep='_'), length(myEvals))
-  # myBinary <- stack(list.files('C:\\Users\\bjselige\\host_map\\juglans.nigra\\proj_current\\individual_projections\\', 'bin.grd', full=T))
-  # names(myBinary) <- rep(paste(myEvals, substr(myModels@models.computed, 15, 27), sep='_'), length(myEvals))
+                          .fun=function(X){X.Eval <- myEvals[[X]]
+                          X.Binary <- stack(paste(tolower(str_replace(spname, ' ', '.')), '\\proj_current\\proj_current_',
+                                                  tolower(str_replace(spname, ' ', '.')), '_', X.Eval, 'bin.grd', sep=''))
+                          names(X.Binary) <- paste(X.Eval, substr(myProj@models.projected, nchar(spname)+1, max(nchar(myProj@models.projected))), sep='')
+                          return(X.Binary)}); myBinary <- stack(unlist(myBinary))
 
   myProjEM <- biomod2::BIOMOD_EnsembleForecasting(EM.output = myEnsemble,
-                                         projection.output = myProj,
-                                         selected.models = 'all',
-                                         binary.meth = myEvals,
-                                         compress = 'xz',
-                                         clamping.mask = F,
-                                         output.format = '.grd')
+                                                  projection.output = myProj,
+                                                  selected.models = 'all',
+                                                  binary.meth = myEvals,
+                                                  compress = 'xz',
+                                                  clamping.mask = F,
+                                                  output.format = '.grd')
 
   myBinaryEM <- raster::stack(paste(tolower(str_replace(spname, ' ', '.')), '\\proj_current\\proj_current_',
-                            tolower(str_replace(spname, ' ', '.')), '_ensemble_', myEvals[[1]], 'bin.grd', sep=''))
+                                    tolower(str_replace(spname, ' ', '.')), '_ensemble_', myEvals[[1]], 'bin.grd', sep=''))
   names(myBinaryEM) <- myEvals
 
   p.out <- myProjEM@proj@val[[1]]
@@ -141,14 +134,14 @@ run_SDM <- function(spname, usa=F){
   p2 <- p.out
   trs <- seq(min(values(p2),na.rm=T), max(values(p2),na.rm=T), by=(max(values(p2),na.rm=T)-min(values(p2),na.rm=T))/100)
   trs.metrics <- plyr::ldply(.data=c(1:length(trs)),
-                       .fun=function(X){
-                         p2.tr <- rast(p2>trs[X])
-                         x.zero <- sum(extract(x=p2.tr, y=pts)==0, na.rm=T)/length(pts)
-                         x.area <- sum(values(p2.tr), na.rm=T)/length(na.omit(p2[]))
-                         x.score <- 1 - x.zero - x.area
-                         df.out <- data.frame('trs'=trs[X], 'zero'=x.zero, 'area'=x.area, 'score'=x.score, row.names=trs[X])
-                         return(df.out)
-                       }, .progress = 'text')
+                             .fun=function(X){
+                               p2.tr <- rast(p2>trs[X])
+                               x.zero <- sum(extract(x=p2.tr, y=pts)==0, na.rm=T)/length(pts)
+                               x.area <- sum(values(p2.tr), na.rm=T)/length(na.omit(p2[]))
+                               x.score <- 1 - x.zero - x.area
+                               df.out <- data.frame('trs'=trs[X], 'zero'=x.zero, 'area'=x.area, 'score'=x.score, row.names=trs[X])
+                               return(df.out)
+                             }, .progress = 'text')
 
   tr.best <- trs.metrics[which.max(trs.metrics$score),]
   p.tr <- p.out>tr.best$trs
@@ -160,8 +153,6 @@ run_SDM <- function(spname, usa=F){
   return(outlist)
 }
 
-# require(plyr)
-#
 # splist <- c(
 #   'Ailanthus altissima', #treeofheaven
 #   'Buxus', #Boxwood
@@ -185,6 +176,12 @@ run_SDM <- function(spname, usa=F){
 #             geo=T, sp=T, removeZeros=T, download=T, ext=extent(biovars[[1]]))
 #source('C:\\Users\\bjselige\\host_map\\get_pts.1.R')
 #pts <- get_pts.1(spname)
+
+# myBinary <-stack(paste(tolower(str_replace(spname, ' ', '.')), '\\proj_current\\proj_current_',
+#                        tolower(str_replace(spname, ' ', '.')), '_', myEvals, 'bin.grd', sep=''))
+# names(myBinary) <- rep(paste(myEvals, substr(myModels@models.computed, 15, 27), sep='_'), length(myEvals))
+# myBinary <- stack(list.files('C:\\Users\\bjselige\\host_map\\juglans.nigra\\proj_current\\individual_projections\\', 'bin.grd', full=T))
+# names(myBinary) <- rep(paste(myEvals, substr(myModels@models.computed, 15, 27), sep='_'), length(myEvals))
 
 # #### output plot
 # borders <- usa
