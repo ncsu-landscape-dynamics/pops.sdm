@@ -16,7 +16,9 @@ run_SDM <- function(spname, usa=F){
   # source('C:\\Users\\bjselige\\host_map\\var.imp.R')
 
   #### 1.0 Load Environmental data ####
-  borders <- terra::vect('C:\\Users\\bjselige\\Downloads\\ne_10m_admin_0_countries_lakes\\ne_10m_admin_0_countries_lakes.shp')
+  #borders <- terra::vect('C:\\Users\\bjselige\\Downloads\\ne_10m_admin_0_countries_lakes\\ne_10m_admin_0_countries_lakes.shp')
+  borders <- terra::vect('Q:\\Shared drives\\Data\\Original\\ne_10m_admin_0_countries_lakes\\ne_10m_admin_0_countries_lakes.shp')
+
 
   if(usa==F){
     envi <- pops.sdm::get_Envi()
