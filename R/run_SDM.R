@@ -5,7 +5,7 @@
 #          bbox, output) #bbox allows user to set own extent, default is sized by extent of the data. output allows for saving outputs locally
 #' @export
 
-run_SDM <- function(spname, usa=F){
+run_SDM <- function(spname, ext=c('USA', 'World')){
   # require(biomod2)
   # require(plyr)
   # require(stringr)
@@ -19,13 +19,13 @@ run_SDM <- function(spname, usa=F){
   borders <- terra::vect('Q:\\Shared drives\\Data\\Original\\ne_10m_admin_0_countries_lakes\\ne_10m_admin_0_countries_lakes.shp')
 
 
-  if(usa==F){
+  if(ext=='World'){
     envi <- pops.sdm::get_Envi()
     envi.cv <- list('cluster'=envi$clust)
     envi <- envi$rast
   }
 
-  if(usa==T){
+  if(ext=='USA'){
     bbox <- c(24.5, -125, 49.5, -66.5)
     us_can <- borders[borders$SOVEREIGNT%in%c('United States of America', 'Canada'),]
     us_can <- terra::crop(us_can, ext(c(bbox[2], bbox[4], bbox[1], bbox[3])))
@@ -37,7 +37,7 @@ run_SDM <- function(spname, usa=F){
 
   #### 1.1 Load species data ####
   # Get observations for species of interest and prep the data for modeling
-  pts <- get_pts.1(spname, bounds=us_can)
+  pts <- pops.sdm::get_pts.1(spname, bounds=us_can)
   pts.r <- terra::rasterize(x=pts, y=envi, fun='length', background=0)
   pts.r <- (pts.r*(envi[[1]]*0+1))>0
   pts.2 <- terra::as.points(pts.r) #pts.2 <- rasterToPoints(pts.r)
