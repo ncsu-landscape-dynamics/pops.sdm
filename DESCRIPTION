@@ -9,10 +9,12 @@ Authors@R:
            comment = c(ORCID = "YOUR-ORCID-ID"))
 Description: What the package does (one paragraph).
 Imports: 
+    BIEN,
     biomod2,
     geodata,
     plyr,
     raster (>= 3.5-15),
+    rinat,
     stringr,
     terra (>= 1.5-17),
     
