@@ -23,6 +23,8 @@ run_SDM <- function(spname, ext=c('USA', 'World')){
     envi <- pops.sdm::get_Envi()
     envi.cv <- list('cluster'=envi$clust)
     envi <- envi$rast
+    pts <- pops.sdm::get_pts.1(spname)
+
   }
 
   if(ext=='USA'){
@@ -32,12 +34,12 @@ run_SDM <- function(spname, ext=c('USA', 'World')){
     envi <- pops.sdm::get_Envi(bio=T, lc=T, rnr=T, soil=F)
     envi.cv <- list('cluster'=envi$clust)
     envi <- terra::crop(x=envi$rast, y=us_can, mask=T)
+    pts <- pops.sdm::get_pts.1(spname, bounds=us_can)
   }
 
 
   #### 1.1 Load species data ####
   # Get observations for species of interest and prep the data for modeling
-  pts <- pops.sdm::get_pts.1(spname, bounds=us_can)
   pts.r <- terra::rasterize(x=pts, y=envi, fun='length', background=0)
   pts.r <- (pts.r*(envi[[1]]*0+1))>0
   pts.2 <- terra::as.points(pts.r) #pts.2 <- rasterToPoints(pts.r)
