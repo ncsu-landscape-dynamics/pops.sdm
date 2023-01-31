@@ -6,13 +6,6 @@
 #' @export
 
 run_SDM <- function(spname, ext=c('USA', 'World')){
-  # require(biomod2)
-  # require(plyr)
-  # require(stringr)
-  # require(terra)
-  # source('C:\\Users\\bjselige\\host_map\\get_Envi.R')
-  # source('C:\\Users\\bjselige\\host_map\\get_pts.1.R')
-  # source('C:\\Users\\bjselige\\host_map\\var.imp.R')
 
   #### 1.0 Load Environmental data ####
   #borders <- terra::vect('C:\\Users\\bjselige\\Downloads\\ne_10m_admin_0_countries_lakes\\ne_10m_admin_0_countries_lakes.shp')
@@ -152,6 +145,14 @@ run_SDM <- function(spname, ext=c('USA', 'World')){
   names(outlist) <- c('Data', 'Model', 'Evaluation', 'Projections', 'Ensemble')
   return(outlist)
 }
+
+# require(biomod2)
+# require(plyr)
+# require(stringr)
+# require(terra)
+# source('C:\\Users\\bjselige\\host_map\\get_Envi.R')
+# source('C:\\Users\\bjselige\\host_map\\get_pts.1.R')
+# source('C:\\Users\\bjselige\\host_map\\var.imp.R')
 
 # splist <- c(
 #   'Ailanthus altissima', #treeofheaven
