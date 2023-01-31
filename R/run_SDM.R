@@ -18,13 +18,11 @@ run_SDM <- function(spname, ext=c('USA', 'World')){
   #borders <- terra::vect('C:\\Users\\bjselige\\Downloads\\ne_10m_admin_0_countries_lakes\\ne_10m_admin_0_countries_lakes.shp')
   borders <- terra::vect('Q:\\Shared drives\\Data\\Original\\ne_10m_admin_0_countries_lakes\\ne_10m_admin_0_countries_lakes.shp')
 
-
   if(ext=='World'){
     envi <- pops.sdm::get_Envi()
     envi.cv <- list('cluster'=envi$clust)
     envi <- envi$rast
     pts <- pops.sdm::get_pts.1(spname)
-
   }
 
   if(ext=='USA'){
