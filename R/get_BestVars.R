@@ -1,10 +1,10 @@
+# require(biomod2)
+# require(plyr)
+# require(raster)
+# require(terra)
 #' @export
 
 get_BestVars <- function(envi, pts){
-  # require(biomod2)
-  # require(plyr)
-  # require(raster)
-  # require(terra)
 
   envi2 <- raster::stack(envi)
   pts.t <- which(pts$lyr1==1)

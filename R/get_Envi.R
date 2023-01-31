@@ -1,10 +1,10 @@
+# require(geodata)
+# require(terra)
 #' @export
 
 get_Envi <- function(bio=F, elev=F, gdd=F, lc=F, pop=F, ptime=F, rnr=F, soil=F, tbase=5, res=1){
-  # require(geodata)
-  # require(terra)
 
-  geodir <- 'Q:\\Shared drives\\Data\\Raster\\Global\\' #geodir <- "C:\\Users\\bjselige\\Documents\\geodata\\"
+  geodir <- 'Q:\\Shared drives\\Data\\Raster\\Global\\'
 
   if(bio==T){
     biovar <- geodata::worldclim_global(var='bio', res=.5, path=geodir)

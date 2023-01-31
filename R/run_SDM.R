@@ -3,11 +3,15 @@
 #          threshold, f.score, #threshold creates a thresholded version of the output. f.score allows user to tune this threshold to their use
 #          envi, var.select, #envi allows user to supply own environmental data. var.select allows for turning off variable selection algorithm
 #          bbox, output) #bbox allows user to set own extent, default is sized by extent of the data. output allows for saving outputs locally
+# require(biomod2)
+# require(plyr)
+# require(stringr)
+# require(terra)
 #' @export
 
 run_SDM <- function(spname, ext=c('USA', 'World')){
 
-  #### 1.0 Load Environmental data ####
+  #### 1.0 Load Environmental data and species data ####
   borders <- terra::vect('Q:\\Shared drives\\Data\\Original\\ne_10m_admin_0_countries_lakes\\ne_10m_admin_0_countries_lakes.shp')
 
   if(ext=='World'){
@@ -27,12 +31,10 @@ run_SDM <- function(spname, ext=c('USA', 'World')){
     pts <- pops.sdm::get_pts.1(spname, bounds=us_can)
   }
 
-
-  #### 1.1 Load species data ####
-  # Get observations for species of interest and prep the data for modeling
+  #### 1.1 Prep species data ####
   pts.r <- terra::rasterize(x=pts, y=envi, fun='length', background=0)
   pts.r <- (pts.r*(envi[[1]]*0+1))>0
-  pts.2 <- terra::as.points(pts.r) #pts.2 <- rasterToPoints(pts.r)
+  pts.2 <- terra::as.points(pts.r)
   myName <- stringr::str_replace(tolower(spname),' ', '_')
   myResp <- pts.2$lyr1 # the presence/absences data for our species
   myResp[myResp==0] <- NA # setting 'true absences' to NA
@@ -52,10 +54,11 @@ run_SDM <- function(spname, ext=c('USA', 'World')){
                                            PA.nb.rep = 1,
                                            PA.strategy = 'random',
                                            PA.nb.absences = sum(myResp, na.rm=T))
-  # Notes on algorithm choice; CTA is redundant with Random Forest, FDA and SRE have relatively low performance
-  myAlgos <- c('GLM', 'GAM', 'GBM', 'RF', 'ANN', 'MAXENT.Phillips')#,MARS)#'CTA', 'FDA', 'SRE',  'MAXENT.Phillips','MAXENT.Phillips.2'
-  # Notes on evaluation methods : POD/SR/FR is not useful, KAPPA, ACCURACY, TSS, and ETS all get about the same results.
-  myEvals <- c('CSI', 'ROC', 'TSS', 'ACCURACY', 'ETS', 'BIAS') #'POD', 'FAR', 'SR' ,'KAPPA'
+  # Notes on algorithm choices; CTA is redundant with Random Forest, FDA and SRE have relatively low performance
+  myAlgos <- c('GLM', 'GAM', 'GBM', 'RF', 'ANN', 'MAXENT.Phillips')
+  # Notes on evaluation methods: POD/SR/FR is not useful, KAPPA, ACCURACY, TSS, and ETS all get the same results
+  myEvals <- c('CSI', 'ROC', 'TSS', 'ACCURACY', 'ETS', 'BIAS')
+
 
   #### 4.0 Run and evaluate the models ####
   myModels <- biomod2::BIOMOD_Modeling(data=myData,
@@ -68,7 +71,7 @@ run_SDM <- function(spname, ext=c('USA', 'World')){
                                        models.eval.meth = myEvals,
                                        SaveObj = T, # recommended to leave true
                                        rescal.all.models = F, #experimental don't use
-                                       do.full.models = F, # use this option if you don't want to use a datasplit
+                                       do.full.models = F, # use this option if you don't want a data split
                                        modeling.id=paste(myName,"FirstModeling",sep=""))
   myEval <- biomod2::get_evaluations(myModels) # get all models evaluation
 
@@ -119,7 +122,6 @@ run_SDM <- function(spname, ext=c('USA', 'World')){
   myBinaryEM <- raster::stack(paste(tolower(str_replace(spname, ' ', '.')), '\\proj_current\\proj_current_',
                                     tolower(str_replace(spname, ' ', '.')), '_ensemble_', myEvals[[1]], 'bin.grd', sep=''))
   names(myBinaryEM) <- myEvals
-
   p.out <- myProjEM@proj@val[[1]]
 
   ##### 5. Thresholding
@@ -145,14 +147,6 @@ run_SDM <- function(spname, ext=c('USA', 'World')){
   return(outlist)
 }
 
-# require(biomod2)
-# require(plyr)
-# require(stringr)
-# require(terra)
-
-# source('C:\\Users\\bjselige\\host_map\\get_Envi.R')
-# source('C:\\Users\\bjselige\\host_map\\get_pts.1.R')
-# source('C:\\Users\\bjselige\\host_map\\var.imp.R')
 
 # splist <- c(
 #   'Ailanthus altissima', #treeofheaven
