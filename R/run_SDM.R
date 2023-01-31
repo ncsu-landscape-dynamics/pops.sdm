@@ -8,14 +8,13 @@
 run_SDM <- function(spname, ext=c('USA', 'World')){
 
   #### 1.0 Load Environmental data ####
-  #borders <- terra::vect('C:\\Users\\bjselige\\Downloads\\ne_10m_admin_0_countries_lakes\\ne_10m_admin_0_countries_lakes.shp')
   borders <- terra::vect('Q:\\Shared drives\\Data\\Original\\ne_10m_admin_0_countries_lakes\\ne_10m_admin_0_countries_lakes.shp')
 
   if(ext=='World'){
     envi <- pops.sdm::get_Envi()
     envi.cv <- list('cluster'=envi$clust)
     envi <- envi$rast
-    pts <- pops.sdm::get_pts.1(spname)
+    pts <- pops.sdm::get_pts.1(spname, bounds=NULL)
   }
 
   if(ext=='USA'){
@@ -150,6 +149,7 @@ run_SDM <- function(spname, ext=c('USA', 'World')){
 # require(plyr)
 # require(stringr)
 # require(terra)
+
 # source('C:\\Users\\bjselige\\host_map\\get_Envi.R')
 # source('C:\\Users\\bjselige\\host_map\\get_pts.1.R')
 # source('C:\\Users\\bjselige\\host_map\\var.imp.R')
