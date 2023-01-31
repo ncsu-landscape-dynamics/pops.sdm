@@ -1,6 +1,6 @@
 #' @export
 
-get_pts.1 <- function(spname, bounds){
+get_pts.1 <- function(spname, bounds=NULL){
   # require(BIEN)
   # require(rinat)
   # require(terra)
