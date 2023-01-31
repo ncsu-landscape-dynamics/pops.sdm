@@ -9,29 +9,25 @@
 # require(terra)
 #' @export
 
-run_SDM <- function(spname, ext=c('USA', 'World', 'Custom'), custom=NULL, res=1){
+run_SDM <- function(spname, extent=c('USA', 'World', 'State', 'Country', 'Custom'), custom=NULL, res=1){
 
   #### 1.0 Load Environmental data and species data ####
 
-  if(ext=='World'){
+  if(extent=='World'){
+    borders <- pops.sdm::world()
     envi <- pops.sdm::get_Envi1k()
     envi <- envi$rast
     pts <- pops.sdm::get_pts.1(spname, bounds=NULL)
   }
 
-  if(ext=='USA'){
-    bbox <- c(24.5, -125, 49.5, -66.5)
-    us_can <- borders[borders$SOVEREIGNT%in%c('United States of America', 'Canada'),]
-    us_can <- terra::crop(us_can, ext(c(bbox[2], bbox[4], bbox[1], bbox[3])))
+  if(extent!='World'){
+    if(extent=='USA'){borders <- pops.sdm::l48()}
+    if(extent=='State'){borders <- pops.sdm::state(name=geoname)}
+    if(extent=='Country'){borders <- pops.sdm::country(name=geoname)}
+    if(extent=='Custom'){}
     envi <- pops.sdm::get_Envi1k(bio=T, lc=F, rnr=F, soil=F)
-    envi <- terra::crop(x=envi$rast, y=us_can, mask=T)
-    pts <- pops.sdm::get_pts.1(spname, bounds=us_can)
-  }
-
-  if(ext=='Custom'){
-    envi <- pops.sdm::get_Envi1k(bio=T, lc=T, rnr=T, soil=F)
-    envi <- terra::crop(x=envi$rast, y=custom, mask=T)
-    pts <- pops.sdm::get_pts.1(spname, bounds=custom)
+    envi <- terra::crop(x=envi$rast, y=borders, mask=T)
+    pts <- pops.sdm::get_pts.1(spname, bounds=borders)
   }
 
   if(res>1){envi <- terra::aggregate(envi, fact=res, fun='mean')}
