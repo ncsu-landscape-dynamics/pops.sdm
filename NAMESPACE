@@ -2,5 +2,5 @@
 
 export(get_BestVars)
 export(get_Envi)
-export(run_SDM)
 export(get_pts.1)
+export(run_SDM)
