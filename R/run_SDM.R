@@ -9,10 +9,9 @@
 # require(terra)
 #' @export
 
-run_SDM <- function(spname, ext=c('USA', 'World', 'Custom'), custom=NULL){
+run_SDM <- function(spname, ext=c('USA', 'World', 'Custom'), custom=NULL, res=1){
 
   #### 1.0 Load Environmental data and species data ####
-  borders <- terra::vect('Q:\\Shared drives\\Data\\Original\\ne_10m_admin_0_countries_lakes\\ne_10m_admin_0_countries_lakes.shp')
 
   if(ext=='World'){
     envi <- pops.sdm::get_Envi1k()
@@ -34,6 +33,9 @@ run_SDM <- function(spname, ext=c('USA', 'World', 'Custom'), custom=NULL){
     envi <- terra::crop(x=envi$rast, y=custom, mask=T)
     pts <- pops.sdm::get_pts.1(spname, bounds=custom)
   }
+
+  if(res>1){envi <- terra::aggregate(envi, fact=res, fun='mean')}
+  if(res<1){envi <- terra::disagg(envi, fact=1/res, method='bilinear')}
 
   #### 1.1 Prep data ####
   envi.cv <- list('cluster'=envi$clust)
