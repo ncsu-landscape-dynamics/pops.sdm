@@ -9,14 +9,13 @@
 # require(terra)
 #' @export
 
-run_SDM <- function(spname, ext=c('USA', 'World')){
+run_SDM <- function(spname, ext=c('USA', 'World', 'Custom'), custom=NULL){
 
   #### 1.0 Load Environmental data and species data ####
   borders <- terra::vect('Q:\\Shared drives\\Data\\Original\\ne_10m_admin_0_countries_lakes\\ne_10m_admin_0_countries_lakes.shp')
 
   if(ext=='World'){
-    envi <- pops.sdm::get_Envi()
-    envi.cv <- list('cluster'=envi$clust)
+    envi <- pops.sdm::get_Envi1k()
     envi <- envi$rast
     pts <- pops.sdm::get_pts.1(spname, bounds=NULL)
   }
@@ -25,13 +24,19 @@ run_SDM <- function(spname, ext=c('USA', 'World')){
     bbox <- c(24.5, -125, 49.5, -66.5)
     us_can <- borders[borders$SOVEREIGNT%in%c('United States of America', 'Canada'),]
     us_can <- terra::crop(us_can, ext(c(bbox[2], bbox[4], bbox[1], bbox[3])))
-    envi <- pops.sdm::get_Envi(bio=T, lc=T, rnr=T, soil=F)
-    envi.cv <- list('cluster'=envi$clust)
+    envi <- pops.sdm::get_Envi1k(bio=T, lc=F, rnr=F, soil=F)
     envi <- terra::crop(x=envi$rast, y=us_can, mask=T)
     pts <- pops.sdm::get_pts.1(spname, bounds=us_can)
   }
 
-  #### 1.1 Prep species data ####
+  if(ext=='Custom'){
+    envi <- pops.sdm::get_Envi1k(bio=T, lc=T, rnr=T, soil=F)
+    envi <- terra::crop(x=envi$rast, y=custom, mask=T)
+    pts <- pops.sdm::get_pts.1(spname, bounds=custom)
+  }
+
+  #### 1.1 Prep data ####
+  envi.cv <- list('cluster'=envi$clust)
   pts.r <- terra::rasterize(x=pts, y=envi, fun='length', background=0)
   pts.r <- (pts.r*(envi[[1]]*0+1))>0
   pts.2 <- terra::as.points(pts.r)

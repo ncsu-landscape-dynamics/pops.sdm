@@ -1,8 +1,9 @@
 # require(geodata)
 # require(terra)
+#, res=1
 #' @export
 
-get_Envi <- function(bio=F, elev=F, gdd=F, lc=F, pop=F, ptime=F, rnr=F, soil=F, tbase=5, res=1){
+get_Envi1k <- function(bio=F, elev=F, gdd=F, lc=F, pop=F, ptime=F, rnr=F, soil=F, tbase=5){
 
   geodir <- 'Q:\\Shared drives\\Data\\Raster\\Global\\'
 
@@ -45,10 +46,10 @@ get_Envi <- function(bio=F, elev=F, gdd=F, lc=F, pop=F, ptime=F, rnr=F, soil=F, 
     if(exists('tbase')==F){tbase <- 5}
     getGDD <- function(tbase){
       gdpath <- paste(geodir, 'gdd.base', tbase, '.tif', sep='')
-      if(file.exists(gdpath)){g1 <- rast(gdpath)}
+      if(file.exists(gdpath)){g1 <- terra::rast(gdpath)}
       if(!file.exists(gdpath)){require(parallel); print('Calculating GDD')
         tavg <- geodata::worldclim_global(var='tavg', res=.5, path=geodir)
-        g1 <- app(x=tavg, tbase, fun=function(x, tbase){
+        g1 <- terra::app(x=tavg, tbase, fun=function(x, tbase){
           days <- c(31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31)
           xbase <- x-tbase; xbase[which(xbase<0)] <- 0
           return(sum(xbase*days))}, cores=detectCores()/2)
@@ -85,7 +86,7 @@ get_Envi <- function(bio=F, elev=F, gdd=F, lc=F, pop=F, ptime=F, rnr=F, soil=F, 
       if(file.exists(ptpath)){prect <- rast(ptpath)}
       if(!file.exists(ptpath)){require(parallel); print('Calculating Precip Timing (DJF-JJA)')
         prec <- worldclim_global(var='prec', res=.5, path=geodir)
-        prect <- app(x=prec, cores=detectCores()/2,
+        prect <- terra::app(x=prec, cores=detectCores()/2,
                      fun=function(x){
                        return(sum(x[[12]], x[[1]], x[[2]])-sum(x[[6]], x[[7]], x[[8]]))
                      })
@@ -128,7 +129,8 @@ get_Envi <- function(bio=F, elev=F, gdd=F, lc=F, pop=F, ptime=F, rnr=F, soil=F, 
   clst <- rbind(biocl, elevcl, gddcl, lccl, popcl, timecl, rnrcl, solcl)
   clst$cluster <- as.integer(as.factor(clst$cluster))
   cl2 <- clst$cluster; names(cl2) <- gsub(' ', '.', clst$var)
-  if(res>1){envi <- terra::aggregate(envi, fact=res, fun='mean')}
+  # if(res>1){envi <- terra::aggregate(envi, fact=res, fun='mean')}
+  # if(res<1){envi <- terra::disagg(envi, fact=1/res, method='bilinear')}
   #if(!is.null(borders)){envi<-terra::crop(x=envi,y=borders,mask=T)}
   return(list('rast'=envi, 'clust'=cl2))
 }
