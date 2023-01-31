@@ -1,3 +1,5 @@
+#' @export
+
 get_pts.1 <- function(spname, bounds){
   # require(BIEN)
   # require(rinat)
