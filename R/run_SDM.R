@@ -9,24 +9,13 @@
 # require(terra)
 #' @export
 
-run_SDM <- function(spname, extent=c('USA', 'World', 'State', 'Country', 'Custom'), custom=NULL, res=1){
+run_SDM <- function(spname, domain=world(), res=1){
 
   #### 1.0 Load Environmental data and species data ####
-  if(extent=='World'){
-    borders <- pops.sdm::world()
-    envi <- pops.sdm::get_Envi1k(); envi <- envi$rast
-    pts <- pops.sdm::get_pts.1(spname, bounds=NULL)
-  }
-
-  if(extent!='World'){
-    if(extent=='USA'){borders <- pops.sdm::l48()}
-    if(extent=='State'){borders <- pops.sdm::state(name=geoname)}
-    if(extent=='Country'){borders <- pops.sdm::country(name=geoname)}
-    if(extent=='Custom'){}
-    envi <- pops.sdm::get_Envi1k(bio=T, lc=F, rnr=F, soil=F)
-    envi <- terra::crop(x=envi$rast, y=borders, mask=T)
-    pts <- pops.sdm::get_pts.1(spname, bounds=borders)
-  }
+  #if(sources(domain)==sources(world())){
+  envi <- pops.sdm::get_Envi1k(bio=T)
+  envi <- terra::crop(x=envi$rast, y=domain, mask=T)
+  pts <- pops.sdm::get_pts.1(spname, domain=domain)
 
   if(res>1){envi <- terra::aggregate(envi, fact=res, fun='mean')}
   if(res<1){envi <- terra::disagg(envi, fact=1/res, method='bilinear')}
