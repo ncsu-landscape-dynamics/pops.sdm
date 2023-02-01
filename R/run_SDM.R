@@ -15,7 +15,7 @@ run_SDM <- function(spname, domain=world(), res=1){
   #if(sources(domain)==sources(world())){
   envi <- pops.sdm::get_Envi1k(bio=T)
   envi <- terra::crop(x=envi$rast, y=domain, mask=T)
-  pts <- pops.sdm::get_pts.1(spname, domain=domain)
+  pts <- pops.sdm::get_pts.1(spname=spname, domain=domain)
 
   if(res>1){envi <- terra::aggregate(envi, fact=res, fun='mean')}
   if(res<1){envi <- terra::disagg(envi, fact=1/res, method='bilinear')}
