@@ -37,13 +37,13 @@ run_SDM <- function(spname, domain=world(), res=1){
 
   #### 3.0 Define options and parameters for modeling ####
   myOptions <- biomod2::BIOMOD_ModelingOptions()
-  myData <- biodmod2::BIOMOD_FormatingData(resp.var = myResp,
-                                           expl.var = myExpl.sel,
-                                           resp.xy = myRespXY,
-                                           resp.name = myName,
-                                           PA.nb.rep = 1,
-                                           PA.strategy = 'random',
-                                           PA.nb.absences = sum(myResp, na.rm=T))
+  myData <- biomod2::BIOMOD_FormatingData(resp.var = myResp,
+                                          expl.var = myExpl.sel,
+                                          resp.xy = myRespXY,
+                                          resp.name = myName,
+                                          PA.nb.rep = 1,
+                                          PA.strategy = 'random',
+                                          PA.nb.absences = sum(myResp, na.rm=T))
   # Notes on algorithm choices; CTA is redundant with Random Forest, FDA and SRE have relatively low performance
   myAlgos <- c('GLM', 'GAM', 'GBM', 'RF', 'ANN', 'MAXENT.Phillips')
   # Notes on evaluation methods: POD/SR/FR is not useful, KAPPA, ACCURACY, TSS, and ETS all get the same results
@@ -51,16 +51,16 @@ run_SDM <- function(spname, domain=world(), res=1){
 
 
   #### 4.0 Run and evaluate the models ####
-  myModels <- biomod2::BIOMOD_Modeling(data=myData,
-                                       models.options = myOptions,
+  myModels <- biomod2::BIOMOD_Modeling(bm.format = myData,
+                                       bm.options = myOptions,
                                        models = myAlgos,
-                                       NbRunEval = 1, #3, #number of runs
-                                       DataSplit = 80,
-                                       Prevalence = 0.5,
-                                       VarImport = 1,
-                                       models.eval.meth = myEvals,
-                                       SaveObj = T, # recommended to leave true
-                                       rescal.all.models = F, #experimental don't use
+                                       nb.rep = 1, #3, #number of runs
+                                       data.split.perc = 80,
+                                       prevalence = 0.5,
+                                       var.import = 1,
+                                       metric.eval = myEvals,
+                                       save.output = T, # recommended to leave true
+                                       scale.models = F, #experimental don't use
                                        do.full.models = F, # use this option if you don't want a data split
                                        modeling.id=paste(myName,"FirstModeling",sep=""))
   myEval <- biomod2::get_evaluations(myModels) # get all models evaluation

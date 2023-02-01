@@ -65,7 +65,7 @@ get_BestVars <- function(envi, pts){
 
                           # Evaluation
                           myEval <- biomod2::get_evaluations(myModels) # get all models evaluation
-                          eval.v <- c(myEval[c('ROC','TSS'),"Testing.data",,,])
+                          eval.v <- myEval$validation[myEval$metric.eval%in%c('ROC', 'TSS')]#eval.v <- c(myEval[c('ROC','TSS'),"Testing.data",,,])
                           return(mean(eval.v))
                         })
         row.names(k.test) <- k.names
