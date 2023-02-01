@@ -14,6 +14,7 @@ run_SDM <- function(spname, domain=world(), res=1){
   #### 1.0 Load Environmental data and species data ####
   #if(sources(domain)==sources(world())){
   envi <- pops.sdm::get_Envi1k(bio=T)
+  envi.cv <- list('cluster'=envi$clust)
   envi <- terra::crop(x=envi$rast, y=domain, mask=T)
   pts <- pops.sdm::get_pts.1(spname=spname, domain=domain)
 
@@ -21,7 +22,6 @@ run_SDM <- function(spname, domain=world(), res=1){
   if(res<1){envi <- terra::disagg(envi, fact=1/res, method='bilinear')}
 
   #### 1.1 Prep data ####
-  envi.cv <- list('cluster'=envi$clust)
   pts.r <- terra::rasterize(x=pts, y=envi, fun='length', background=0)
   pts.r <- (pts.r*(envi[[1]]*0+1))>0
   pts.2 <- terra::as.points(pts.r)
