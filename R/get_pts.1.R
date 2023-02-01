@@ -4,10 +4,10 @@
 # require(geodata)
 #' @export
 
-get_pts.1 <- function(spname, bounds=NULL){
+get_pts.1 <- function(spname, domain=NULL){
 
-  if(is.null(bounds)){x0 <- terra::ext(c(-180, 180, -90, 90)); bb <- c(x0[3], x0[1], x0[4], x0[2])}
-  if(!is.null(bounds)){x1 <- terra::ext(bounds); bb <- c(x1[3], x1[1], x1[4], x1[2])}
+  if(is.null(domain)){x0 <- terra::ext(c(-180, 180, -90, 90)); bb <- c(x0[3], x0[1], x0[4], x0[2])}
+  if(!is.null(domain)){x1 <- terra::ext(domain); bb <- c(x1[3], x1[1], x1[4], x1[2])}
 
   sp.inat <- rinat::get_inat_obs(taxon_name=spname, maxresults=9999, quality='research', geo=T, bounds=bb)
 
@@ -26,6 +26,6 @@ get_pts.1 <- function(spname, bounds=NULL){
   sp.pts <- data.frame('longitude'=c(sp.inat$longitude, sp.bien$longitude), 'latitude'=c(sp.inat$latitude, sp.bien$latitude))
   sp.pts <- unique(sp.pts[which(unique(!is.na(sp.pts$longitude), !is.na(sp.pts$latitude))),])
   sp.pts <- terra::vect(SpatialPoints(sp.pts, CRS('+proj=longlat +datum=WGS84 +no_defs +ellps=WGS84 +towgs84=0,0,0')))
-  if(!is.null(bounds)){sp.pts <- terra::crop(x=sp.pts, y=bounds)}
+  if(!is.null(bounds)){sp.pts <- terra::crop(x=sp.pts, y=domain)}
   return(sp.pts)
 }
