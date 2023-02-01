@@ -12,11 +12,9 @@
 run_SDM <- function(spname, extent=c('USA', 'World', 'State', 'Country', 'Custom'), custom=NULL, res=1){
 
   #### 1.0 Load Environmental data and species data ####
-
   if(extent=='World'){
     borders <- pops.sdm::world()
-    envi <- pops.sdm::get_Envi1k()
-    envi <- envi$rast
+    envi <- pops.sdm::get_Envi1k(); envi <- envi$rast
     pts <- pops.sdm::get_pts.1(spname, bounds=NULL)
   }
 
