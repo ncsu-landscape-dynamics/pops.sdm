@@ -26,6 +26,6 @@ get_pts.1 <- function(spname, domain=NULL){
   sp.pts <- data.frame('longitude'=c(sp.inat$longitude, sp.bien$longitude), 'latitude'=c(sp.inat$latitude, sp.bien$latitude))
   sp.pts <- unique(sp.pts[which(unique(!is.na(sp.pts$longitude), !is.na(sp.pts$latitude))),])
   sp.pts <- terra::vect(SpatialPoints(sp.pts, CRS('+proj=longlat +datum=WGS84 +no_defs +ellps=WGS84 +towgs84=0,0,0')))
-  if(!is.null(bounds)){sp.pts <- terra::crop(x=sp.pts, y=domain)}
+  if(!is.null(domain)){sp.pts <- terra::crop(x=sp.pts, y=domain)}
   return(sp.pts)
 }
