@@ -15,6 +15,7 @@ Imports:
     plyr,
     raster (>= 3.5-15),
     rinat,
+    sp,
     stringr,
     terra (>= 1.5-17)
 License: `use_mit_license()`, `use_gpl3_license()` or friends to pick a
