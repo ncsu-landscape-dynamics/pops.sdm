@@ -50,16 +50,16 @@ get_BestVars <- function(envi, pts){
                                                          PA.user.table = PA.df)
 
                           # 3. Computing the models
-                          myModels <- biomod2::BIOMOD_Modeling(data = myData,
-                                                               models.options = myOptions,
+                          myModels <- biomod2::BIOMOD_Modeling(bm.format = myData,
+                                                               bm.options = myOptions,
                                                                models = i.algo,
-                                                               NbRunEval = 1, #number of runs
-                                                               DataSplit = 100, #50,
-                                                               Prevalence = NULL,
-                                                               VarImport = 0,
-                                                               models.eval.meth = c('ROC', 'TSS'),
-                                                               SaveObj = T, # recommended to leave true
-                                                               rescal.all.models = F, #experimental don't use
+                                                               nb.rep = 1, #number of runs
+                                                               data.split.perc = 100, #50,
+                                                               prevalence = NULL,
+                                                               var.import = 0,
+                                                               metric.eval = c('ROC', 'TSS'),
+                                                               save.output = T, # recommended to leave true
+                                                               scale.models = F, #experimental don't use
                                                                do.full.models = F,
                                                                modeling.id = paste(myName2,"Modeling",sep=""))
 
