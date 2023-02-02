@@ -1,6 +1,5 @@
 # require(geodata)
 # require(terra)
-#, res=1
 #' @export
 
 get_Envi1k <- function(bio=F, elev=F, gdd=F, lc=F, pop=F, ptime=F, rnr=F, soil=F, tbase=5){
@@ -129,8 +128,5 @@ get_Envi1k <- function(bio=F, elev=F, gdd=F, lc=F, pop=F, ptime=F, rnr=F, soil=F
   clst <- rbind(biocl, elevcl, gddcl, lccl, popcl, timecl, rnrcl, solcl)
   clst$cluster <- as.integer(as.factor(clst$cluster))
   cl2 <- clst$cluster; names(cl2) <- gsub(' ', '.', clst$var)
-  # if(res>1){envi <- terra::aggregate(envi, fact=res, fun='mean')}
-  # if(res<1){envi <- terra::disagg(envi, fact=1/res, method='bilinear')}
-  #if(!is.null(borders)){envi<-terra::crop(x=envi,y=borders,mask=T)}
   return(list('rast'=envi, 'clust'=cl2))
 }
