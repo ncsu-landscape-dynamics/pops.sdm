@@ -33,41 +33,41 @@ get_BestVars <- function(envi, pts){
         if(k==1){k.names <- names(envi2); k.stack <-NULL}
 
         k.test <- plyr::ldply(.data=k.names,
-                        .fun=function(X){
-                          myExpl <- raster::stack(envi2[[X]], k.stack)
-                          PA.df <- as.data.frame(myResp2); PA.df[is.na(PA.df)] <- FALSE
-                          PA.fact <- sum(PA.df==F)/sum(myResp2, na.rm=T)
-                          PA.df$myResp2[which(PA.df==F)[round((1:sum(myResp2, na.rm=T))*PA.fact)]] <- TRUE
-                          PA.df$myResp2 <- as.logical(PA.df$myResp2)
+                              .fun=function(X){
+                                myExpl <- raster::stack(envi2[[X]], k.stack)
+                                PA.df <- as.data.frame(myResp2); PA.df[is.na(PA.df)] <- FALSE
+                                PA.fact <- sum(PA.df==F)/sum(myResp2, na.rm=T)
+                                PA.df$myResp2[which(PA.df==F)[round((1:sum(myResp2, na.rm=T))*PA.fact)]] <- TRUE
+                                PA.df$myResp2 <- as.logical(PA.df$myResp2)
 
-                          myOptions <- biomod2::BIOMOD_ModelingOptions('GLM'=list(test='none'))
-                          myData <- biomod2::BIOMOD_FormatingData(resp.var = myResp2,
-                                                         expl.var = myExpl,
-                                                         resp.xy = myXY2,
-                                                         resp.name = myName2,
-                                                         PA.nb.rep = 1,
-                                                         PA.strategy = 'user.defined',
-                                                         PA.user.table = PA.df)
+                                myOptions <- biomod2::BIOMOD_ModelingOptions('GLM'=list(test='none'))
+                                myData <- biomod2::BIOMOD_FormatingData(resp.var = myResp2,
+                                                                        expl.var = myExpl,
+                                                                        resp.xy = myXY2,
+                                                                        resp.name = myName2,
+                                                                        PA.nb.rep = 1,
+                                                                        PA.strategy = 'user.defined',
+                                                                        PA.user.table = PA.df)
 
-                          # 3. Computing the models
-                          myModels <- biomod2::BIOMOD_Modeling(bm.format = myData,
-                                                               bm.options = myOptions,
-                                                               models = i.algo,
-                                                               nb.rep = 1, #number of runs
-                                                               data.split.perc = 100, #50,
-                                                               prevalence = NULL,
-                                                               var.import = 0,
-                                                               metric.eval = c('ROC', 'TSS'),
-                                                               save.output = T, # recommended to leave true
-                                                               scale.models = F, #experimental don't use
-                                                               do.full.models = F,
-                                                               modeling.id = paste(myName2,"Modeling",sep=""))
+                                # 3. Computing the models
+                                myModels <- biomod2::BIOMOD_Modeling(bm.format = myData,
+                                                                     bm.options = myOptions,
+                                                                     models = i.algo,
+                                                                     nb.rep = 1, #number of runs
+                                                                     data.split.perc = 100, #50,
+                                                                     prevalence = NULL,
+                                                                     var.import = 0,
+                                                                     metric.eval = c('ROC', 'TSS'),
+                                                                     save.output = T, # recommended to leave true
+                                                                     scale.models = F, #experimental don't use
+                                                                     do.full.models = F,
+                                                                     modeling.id = paste(myName2,"Modeling",sep=""))
 
-                          # Evaluation
-                          myEval <- biomod2::get_evaluations(myModels) # get all models evaluation
-                          eval.v <- myEval$calibration[myEval$metric.eval%in%c('ROC', 'TSS')]#eval.v <- c(myEval[c('ROC','TSS'),"Testing.data",,,])
-                          return(mean(eval.v))
-                        })
+                                # Evaluation
+                                myEval <- biomod2::get_evaluations(myModels) # get all models evaluation
+                                eval.v <- myEval$calibration[myEval$metric.eval%in%c('ROC', 'TSS')]#eval.v <- c(myEval[c('ROC','TSS'),"Testing.data",,,])
+                                return(mean(eval.v))
+                              })
         row.names(k.test) <- k.names
 
         k.out <- data.frame(cbind(envi.cv$cluster[row.names(k.test)], k.test$V1))
@@ -107,13 +107,17 @@ get_BestVars <- function(envi, pts){
     # i.t2 <- Sys.time(); i.time <- i.t2-i.t1
     # t.list[[i]] <- i.time
   }
-  i.data <- plyr::ldply(.data=c(1:length(algos)),
-                  .fun=function(X){
-                    X.df <- data.frame('algo'=j.data$algo[X], 'score'=j.data$score[X],
-                                       'var'=data.frame(t(j.data[X, which(!colnames(j.data)%in%c('algo', 'score'))]))[,1])
-                    if(any(is.na(X.df$var))){X.df$var[which(is.na(X.df$var))] <- paste('NA', which(is.na(X.df$var)), sep='_')}
-                    return(X.df)})
-  i.d2 <- plyr::ldply(.data=unique(i.data$var), .fun=function(X){data.frame('var'=X, 'score'=sum(i.data$score[which(i.data$var==X)]))})
+
+  i.data <- plyr::ldply(.data=c(1:length(algos)), .fun=function(X){
+    X.df <- data.frame('algo'=j.data$algo[X], 'score'=j.data$score[X],
+                       'var'=data.frame(t(j.data[X, which(!colnames(j.data)%in%c('algo', 'score'))]))[,1])
+    if(any(is.na(X.df$var))){X.df$var[which(is.na(X.df$var))] <- paste('NA', which(is.na(X.df$var)), sep='_')}
+    return(X.df)})
+
+  i.d2 <- plyr::ldply(.data=unique(i.data$var), .fun=function(X){
+    data.frame('var'=X, 'score'=sum(i.data$score[which(i.data$var==X)]))
+  })
+
   i.d2 <- i.d2[order(i.d2$score, decreasing=T),];  i.d2 <- i.d2[1:max(envi.cv$cluster),]
   i.stack <- stack(envi2[[i.d2[1:max(envi.cv$cluster),'var'][!grepl('NA_',i.d2[1:max(envi.cv$cluster),'var'])]]])
   return(i.stack)
