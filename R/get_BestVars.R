@@ -99,7 +99,7 @@ get_BestVars <- function(envi, pts){
       j.vars <- rev(names(j.stack))
       j.v1 <- data.frame(t(data.frame(1:j.length))[0,])
       j.v2 <- data.frame(t(data.frame(j.vars)))
-      j.v3 <- rbind.fill(j.v1, j.v2)
+      j.v3 <- plyr::rbind.fill(j.v1, j.v2)
       colnames(j.v3) <- paste('var', 1:j.length, sep = '')
       j.v4 <- data.frame('algo'=n.algo, 'score'=j.score, j.v3)
       j.data <- rbind(j.data, j.v4)
