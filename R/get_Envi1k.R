@@ -1,5 +1,6 @@
 # require(geodata)
 # require(terra)
+# require(parallel)
 #' @export
 
 get_Envi1k <- function(bio=F, elev=F, gdd=F, lc=F, pop=F, ptime=F, rnr=F, soil=F, tbase=5){
@@ -9,11 +10,11 @@ get_Envi1k <- function(bio=F, elev=F, gdd=F, lc=F, pop=F, ptime=F, rnr=F, soil=F
   if(bio==T){
     biovar <- geodata::worldclim_global(var='bio', res=.5, path=geodir)
     names(biovar) <- c('Mean Annual Temp', 'Mean Diurnal Range', 'Isothermality', 'Temp Seasonality',
-                        'Max Temp Warmest Month', 'Min Temp Coldest Month', 'Temp Annual Range',
-                        'Mean Temp Wettest Quarter', 'Mean Temp Driest Quarter', 'Mean Temp Warmest Quarter',
-                        'Mean Temp Coldest Quarter', 'Annual Precip', 'Precip Wettest Month',
-                        'Precip Driest Month', 'Precip Seasonality', 'Precip Wettest Quarter',
-                        'Precip Driest Quarter', 'Precip Warmest Quarter', 'Precip Coldest Quarter')
+                       'Max Temp Warmest Month', 'Min Temp Coldest Month', 'Temp Annual Range',
+                       'Mean Temp Wettest Quarter', 'Mean Temp Driest Quarter', 'Mean Temp Warmest Quarter',
+                       'Mean Temp Coldest Quarter', 'Annual Precip', 'Precip Wettest Month',
+                       'Precip Driest Month', 'Precip Seasonality', 'Precip Wettest Quarter',
+                       'Precip Driest Quarter', 'Precip Warmest Quarter', 'Precip Coldest Quarter')
     biocl <- data.frame(var=names(biovar), cluster=NA)
     biocl$cluster[which(biocl$var%in%c('Mean Annual Temp',
                                        'Max Temp Warmest Month',
@@ -46,7 +47,7 @@ get_Envi1k <- function(bio=F, elev=F, gdd=F, lc=F, pop=F, ptime=F, rnr=F, soil=F
     getGDD <- function(tbase){
       gdpath <- paste(geodir, 'gdd.base', tbase, '.tif', sep='')
       if(file.exists(gdpath)){g1 <- terra::rast(gdpath)}
-      if(!file.exists(gdpath)){require(parallel); print('Calculating GDD')
+      if(!file.exists(gdpath)){print('Calculating GDD')
         tavg <- geodata::worldclim_global(var='tavg', res=.5, path=geodir)
         g1 <- terra::app(x=tavg, tbase, fun=function(x, tbase){
           days <- c(31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31)
@@ -83,12 +84,10 @@ get_Envi1k <- function(bio=F, elev=F, gdd=F, lc=F, pop=F, ptime=F, rnr=F, soil=F
     getPrecipTiming <- function(){
       ptpath <- paste(geodir, '\\precip.timing.tif', sep='')
       if(file.exists(ptpath)){prect <- rast(ptpath)}
-      if(!file.exists(ptpath)){require(parallel); print('Calculating Precip Timing (DJF-JJA)')
-        prec <- worldclim_global(var='prec', res=.5, path=geodir)
+      if(!file.exists(ptpath)){print('Calculating Precip Timing (DJF-JJA)')
+        prec <- geodata::worldclim_global(var='prec', res=.5, path=geodir)
         prect <- terra::app(x=prec, cores=detectCores()/2,
-                     fun=function(x){
-                       return(sum(x[[12]], x[[1]], x[[2]])-sum(x[[6]], x[[7]], x[[8]]))
-                     })
+                            fun=function(x){return(sum(x[[12]], x[[1]], x[[2]])-sum(x[[6]], x[[7]], x[[8]]))})
         terra::writeRaster(prect, filename=ptpath); closeAllConnections()
       }
       names(prect) <- 'Precip Timing (DFJ-JJA)'; return(prect)
@@ -98,7 +97,7 @@ get_Envi1k <- function(bio=F, elev=F, gdd=F, lc=F, pop=F, ptime=F, rnr=F, soil=F
   }
 
   if(rnr==T){
-    rnrvar <- rast(list.files(geodir, '.dist.wrld', full.names = T))
+    rnrvar <- terra::rast(list.files(geodir, '.dist.wrld', full.names = T))
     names(rnrvar) <- c('Road Dist', 'Rail Dist')
     rnrcl <- data.frame(var=names(rnrvar), cluster='Roads/Rails 1')
   }
@@ -108,7 +107,7 @@ get_Envi1k <- function(bio=F, elev=F, gdd=F, lc=F, pop=F, ptime=F, rnr=F, soil=F
                     'Soil_h2o_33kpa_0cm.tif', 'Soil_h2o_33kpa_mean.1km.tif',
                     'Soil_h2o_33kpa_200cm.tif', 'Soil_h2o_1500kpa_0cm.tif',
                     'Soil_h2o_1500kpa_mean.1km.tif', 'Soil_h2o_1500kpa_200cm.tif')
-    solvar <- rast(paste(geodir, '\\soils\\', soil.files, sep=''))
+    solvar <- terra::rast(paste(geodir, '\\soils\\', soil.files, sep=''))
     names(solvar) <- c('Soil_pH_0cm', 'Soil_pH_mean', 'Soil_pH_200cm',
                        'Soil_h2o_33_0cm', 'Soil_h2o_33_mean', 'Soil_h2o_33_200cm',
                        'Soil_h2o_1500_0cm', 'Soil_h2o_1500_mean', 'Soil_h2o_1500_200cm')
