@@ -123,7 +123,7 @@ get_Envi1k <- function(bio=F, elev=F, gdd=F, lc=F, pop=F, ptime=F, rnr=F, soil=F
   if(rnr==F){rnrvar <- NULL; rnrcl <- NULL}
   if(soil==F){solvar <- NULL; solcl <- NULL}
 
-  envi <- c(biovar, elevvar, gddvar, lcvar, popvar, timevar, rnrvar, solvar)
+  envi <- terra::rast(terra::as.list(terra::c(biovar, elevvar, gddvar, lcvar, popvar, timevar, rnrvar, solvar)))
   clst <- rbind(biocl, elevcl, gddcl, lccl, popcl, timecl, rnrcl, solcl)
   clst$cluster <- as.integer(as.factor(clst$cluster))
   cl2 <- clst$cluster; names(cl2) <- gsub(' ', '.', clst$var)
