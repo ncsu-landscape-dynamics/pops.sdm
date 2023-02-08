@@ -16,6 +16,7 @@ get_BestVars <- function(envi, pts){
   myResp2[myResp2==0] <- NA # setting 'true absences' to NA
   myXY2 <- terra::crds(pts.s) # the XY coordinates of species data
   myName2 <- 'test'
+  nreps <- 3
 
   # algos <- list(c('SRE'), c('GLM'), c('RF'), c('MAXENT.Phillips'))
   # names(algos) <- c('SRE', 'GLM', 'RF', 'MAXENT.Phillips')
@@ -28,7 +29,7 @@ get_BestVars <- function(envi, pts){
 
   for(i in 1:length(algos)){
     i.algo <- algos[[i]]; n.algo <- names(algos)[i] #i.t1 <- Sys.time()
-    for(j in 1:1){#reps of same algo
+    for(j in 1:nreps){#reps of same algo
       for(k in 1:max(envi.cv$cluster)){ #reps through clusters
         if(k==1){k.names <- names(envi2); k.stack <-NULL}
 
