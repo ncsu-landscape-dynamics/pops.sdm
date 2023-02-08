@@ -6,7 +6,7 @@
 
 get_BestVars <- function(envi, pts){
 
-  envi2 <- raster::stack(envi)
+  envi2 <- raster::stack(envi$rast)
   pts.t <- which(pts$lyr1==1)
   pts.f <- which(pts$lyr1==0)
   p.max <- 1000000-length(pts.t)

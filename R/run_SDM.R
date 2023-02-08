@@ -13,16 +13,16 @@ run_SDM <- function(spname, domain=world(), res=1){
 
   #### 1.0 Load Environmental data and species data ####
   #if(sources(domain)==sources(world())){
-  envi <- pops.sdm::get_Envi1k(bio=T)
-  envi.cv <- list('cluster'=envi$clust)
-  envi <- terra::crop(x=envi$rast, y=domain, mask=T)
-  pts <- pops.sdm::get_pts.1(spname=spname, domain=domain)
+  envi.1k <- pops.sdm::get_Envi1k(soil=T)
+  envi.cv <- list('cluster'=envi.1k$clust)
+  envi <- terra::crop(x=envi.1k$rast, y=domain, mask=T)
+  pts.1 <- pops.sdm::get_pts.1(spname=spname, domain=domain)
 
   if(res>1){envi <- terra::aggregate(envi, fact=res, fun='mean')}
   if(res<1){envi <- terra::disagg(envi, fact=1/res, method='bilinear')}
 
   #### 1.1 Prep data ####
-  pts.r <- terra::rasterize(x=pts, y=envi, fun='length', background=0)
+  pts.r <- terra::rasterize(x=pts.1, y=envi, fun='length', background=0)
   pts.r <- (pts.r*(envi[[1]]*0+1))>0
   pts.2 <- terra::as.points(pts.r)
   myName <- stringr::str_replace(tolower(spname),' ', '_')
@@ -32,7 +32,7 @@ run_SDM <- function(spname, domain=world(), res=1){
 
 
   #### 2.0 Run variable selection function to choose the ideal variables ####
-  myExpl.sel <- pops.sdm::get_BestVars(envi, pts.2)
+  myExpl.sel <- pops.sdm::get_BestVars(envi.1k, pts.2)
 
 
   #### 3.0 Define options and parameters for modeling ####
