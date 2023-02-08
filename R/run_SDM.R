@@ -15,7 +15,7 @@ run_SDM <- function(spname, domain=world(), res=1){
   #if(sources(domain)==sources(world())){
   envi.1k <- pops.sdm::get_Envi1k(soil=T)
   envi.cv <- list('cluster'=envi.1k$clust)
-  envi <- terra::crop(x=envi.1k$rast, y=domain, mask=T)
+  envi <- terra::crop(x=envi.1k$rast, y=domain, mask=T); envi.1k$rast <- envi
   pts.1 <- pops.sdm::get_pts.1(spname=spname, domain=domain)
 
   if(res>1){envi <- terra::aggregate(envi, fact=res, fun='mean')}
