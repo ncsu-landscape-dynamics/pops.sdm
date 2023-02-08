@@ -1,7 +1,7 @@
 #require(rnaturalearth)
 #' @export
 
-country <- function(name){
-  country <- rnaturalearth::ne_countries(scale=10, country=name)
+country <- function(names){
+  country <- rnaturalearth::ne_countries(scale=10, country=names)
   return(country)
 }

@@ -1,8 +1,8 @@
 #require(rnaturalearth)
 #' @export
 
-state <- function(name){
+state <- function(names){
   usa <- rnaturalearth::ne_states(country='United States of America')
-  ste <- usa[usa$name==name,]
+  ste <- usa[usa$name%in%names,]
   return(ste)
 }
