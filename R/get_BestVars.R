@@ -30,7 +30,7 @@ get_BestVars <- function(envi, pts){
   for(i in 1:length(algos)){
     i.algo <- algos[[i]]; n.algo <- names(algos)[i] #i.t1 <- Sys.time()
     for(j in 1:nreps){#reps of same algo
-      for(k in 1:max(envi.cv$cluster)){ #reps through clusters
+      for(k in 1:max(envi$clust)){ #reps through clusters
         if(k==1){k.names <- names(envi2); k.stack <-NULL}
 
         k.test <- plyr::ldply(.data=k.names,
@@ -71,29 +71,29 @@ get_BestVars <- function(envi, pts){
                               })
         row.names(k.test) <- k.names
 
-        k.out <- data.frame(cbind(envi.cv$cluster[row.names(k.test)], k.test$V1))
-        colnames(k.out) <- c('cluster', 'score')
-        k.out <- k.out[order(k.out$cluster),]
+        k.out <- data.frame(cbind(envi$clust[row.names(k.test)], k.test$V1))
+        colnames(k.out) <- c('clust', 'score')
+        k.out <- k.out[order(k.out$clust),]
         k.out[,3] <- as.integer(rank(-k.out$score))
         k.var <- row.names(k.out)[which.min(k.out$V3)]
         k.score <- k.out$score[which.max(k.out$score)]
-        k.cluster <- k.out[k.var, 'cluster']
+        k.clust <- k.out[k.var, 'clust']
         k.envi <- envi2[[k.var]]
         k.stack <- raster::stack(k.envi, k.stack)
         k.list[[k]] <- list('score'=k.score, 'stack'=k.stack)
 
         # this reduces the number of variables in each cluster to the top 2 (redux var) most important
         if(k==1){redux <- 2; k.redux <- data.frame()
-        for(i in 1:length(unique(k.out$cluster))){
-          i.clust <- k.out[k.out$cluster==i,]
+        for(i in 1:length(unique(k.out$clust))){
+          i.clust <- k.out[k.out$clust==i,]
           i.redux <- i.clust[order(i.clust$score, decreasing=T),][1:redux,]
           k.redux <- rbind(k.redux, i.redux)
         }
         k.out <- k.redux
         }
-        k.names <-  row.names(k.out)[which(k.out$cluster!=k.cluster)]
+        k.names <-  row.names(k.out)[which(k.out$clust!=k.clust)]
       }
-      j.length <- max(envi.cv$cluster)
+      j.length <- max(envi$clust)
       j.list[[j]] <- k.list[[which.max(lapply(X=c(1:j.length), FUN=function(X){k.list[[X]]$score}))]]$stack
       j.stack <- j.list[[j]]
       j.score <- max(unlist(lapply(X=c(1:j.length), FUN=function(X){k.list[[X]]$score})))
@@ -101,7 +101,6 @@ get_BestVars <- function(envi, pts){
       j.v1 <- data.frame(t(data.frame(1:j.length))[0,])
       j.v2 <- data.frame(t(data.frame(j.vars)))
       j.v3 <- plyr::rbind.fill(j.v1, j.v2)
-      #j.v3 <- data.frame(t(data.frame(j.vars)))
       colnames(j.v3) <- paste('var', 1:j.length, sep = '')
       j.v4 <- data.frame('algo'=n.algo, 'score'=j.score, j.v3)
       j.data <- rbind(j.data, j.v4)
@@ -120,7 +119,7 @@ get_BestVars <- function(envi, pts){
     data.frame('var'=X, 'score'=sum(i.data$score[which(i.data$var==X)]))
   })
 
-  i.d2 <- i.d2[order(i.d2$score, decreasing=T),];  i.d2 <- i.d2[1:max(envi.cv$cluster),]
-  i.stack <- raster::stack(envi2[[i.d2[1:max(envi.cv$cluster),'var'][!grepl('NA_',i.d2[1:max(envi.cv$cluster),'var'])]]])
+  i.d2 <- i.d2[order(i.d2$score, decreasing=T),];  i.d2 <- i.d2[1:max(envi$clust),]
+  i.stack <- raster::stack(envi2[[i.d2[1:max(envi$clust),'var'][!grepl('NA_',i.d2[1:max(envi$clust),'var'])]]])
   return(i.stack)
 }
