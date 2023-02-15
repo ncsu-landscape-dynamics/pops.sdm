@@ -7,6 +7,7 @@
 get_BestVars <- function(envi, pts){
 
   envi2 <- raster::stack(envi$rast)
+  envi.cv <- envi$clust
   pts.t <- which(pts$lyr1==1)
   pts.f <- which(pts$lyr1==0)
   p.max <- 1000000-length(pts.t)
@@ -30,7 +31,7 @@ get_BestVars <- function(envi, pts){
   for(i in 1:length(algos)){
     i.algo <- algos[[i]]; n.algo <- names(algos)[i] #i.t1 <- Sys.time()
     for(j in 1:nreps){#reps of same algo
-      for(k in 1:max(envi$clust)){ #reps through clusters
+      for(k in 1:max(envi.cv)){ #reps through clusters
         if(k==1){k.names <- names(envi2); k.stack <-NULL}
 
         k.test <- plyr::ldply(.data=k.names,
@@ -71,7 +72,7 @@ get_BestVars <- function(envi, pts){
                               })
         row.names(k.test) <- k.names
 
-        k.out <- data.frame(cbind(envi$clust[row.names(k.test)], k.test$V1))
+        k.out <- data.frame(cbind(envi.cv[row.names(k.test)], k.test$V1))
         colnames(k.out) <- c('clust', 'score')
         k.out <- k.out[order(k.out$clust),]
         k.out[,3] <- as.integer(rank(-k.out$score))
@@ -93,7 +94,7 @@ get_BestVars <- function(envi, pts){
         }
         k.names <-  row.names(k.out)[which(k.out$clust!=k.clust)]
       }
-      j.length <- max(envi$clust)
+      j.length <- max(envi.cv)
       j.list[[j]] <- k.list[[which.max(lapply(X=c(1:j.length), FUN=function(X){k.list[[X]]$score}))]]$stack
       j.stack <- j.list[[j]]
       j.score <- max(unlist(lapply(X=c(1:j.length), FUN=function(X){k.list[[X]]$score})))
@@ -119,7 +120,7 @@ get_BestVars <- function(envi, pts){
     data.frame('var'=X, 'score'=sum(i.data$score[which(i.data$var==X)]))
   })
 
-  i.d2 <- i.d2[order(i.d2$score, decreasing=T),];  i.d2 <- i.d2[1:max(envi$clust),]
-  i.stack <- raster::stack(envi2[[i.d2[1:max(envi$clust),'var'][!grepl('NA_',i.d2[1:max(envi$clust),'var'])]]])
+  i.d2 <- i.d2[order(i.d2$score, decreasing=T),];  i.d2 <- i.d2[1:max(envi.cv),]
+  i.stack <- raster::stack(envi2[[i.d2[1:max(envi.cv),'var'][!grepl('NA_',i.d2[1:max(envi.cv),'var'])]]])
   return(i.stack)
 }
