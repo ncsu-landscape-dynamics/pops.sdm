@@ -13,9 +13,8 @@ run_SDM <- function(spname, domain=world(), res=1){
 
   #### 1.0 Load Environmental data and species data ####
   #if(sources(domain)==sources(world())){
-  envi.1k <- pops.sdm::get_Envi1k(soil=T)
-  envi.cv <- list('cluster'=envi.1k$clust)
-  envi <- terra::crop(x=envi.1k$rast, y=domain, mask=T); envi.1k$rast <- envi
+  envi.1k <- pops.sdm::get_Envi1k(bio=T, elev=T, soil=T) #envi.cv <- envi.1k$clust
+  envi <- terra::crop(x=envi.1k$rast, y=terra::vect(domain), mask=T)#; envi.1k$rast <- envi
   pts.1 <- pops.sdm::get_pts.1(spname=spname, domain=domain)
 
   if(res>1){envi <- terra::aggregate(envi, fact=res, fun='mean')}
@@ -32,47 +31,65 @@ run_SDM <- function(spname, domain=world(), res=1){
 
 
   #### 2.0 Run variable selection function to choose the ideal variables ####
-  myExpl.sel <- pops.sdm::get_BestVars(envi.1k, pts.2)
+  envi.best <- pops.sdm::get_BestVars(list('rast'=envi, 'clust'=envi.1k$clust), pts.2)
 
 
   #### 3.0 Define options and parameters for modeling ####
+  #mod.dir <- 'C:\Users\bjselige\Documents\pops.sdm\notholithocarpus.densiflorus'
   myOptions <- biomod2::BIOMOD_ModelingOptions()
   myData <- biomod2::BIOMOD_FormatingData(resp.var = myResp,
-                                          expl.var = myExpl.sel,
+                                          expl.var = envi.best,
                                           resp.xy = myRespXY,
                                           resp.name = myName,
+                                          #dir.name =
                                           PA.nb.rep = 1,
                                           PA.strategy = 'random',
                                           PA.nb.absences = sum(myResp, na.rm=T))
   # Notes on algorithm choices; CTA is redundant with Random Forest, FDA and SRE have relatively low performance
-  myAlgos <- c('GLM', 'GAM', 'GBM', 'RF', 'ANN', 'MAXENT.Phillips')
+  myAlgos <- c('GLM', 'GAM', 'GBM', 'RF', 'ANN')#, 'MAXENT.Phillips')
   # Notes on evaluation methods: POD/SR/FR is not useful, KAPPA, ACCURACY, TSS, and ETS all get the same results
   myEvals <- c('CSI', 'ROC', 'TSS', 'ACCURACY', 'ETS', 'BIAS')
 
 
   #### 4.0 Run and evaluate the models ####
   myModels <- biomod2::BIOMOD_Modeling(bm.format = myData,
-                                       bm.options = myOptions,
+                                       modeling.id=paste(myName,"AllModels",sep=""),
                                        models = myAlgos,
+                                       bm.options = myOptions,
                                        nb.rep = 1, #3, #number of runs
                                        data.split.perc = 80,
-                                       prevalence = 0.5,
-                                       var.import = 1,
                                        metric.eval = myEvals,
-                                       save.output = T, # recommended to leave true
-                                       scale.models = F, #experimental don't use
-                                       do.full.models = F, # use this option if you don't want a data split
-                                       modeling.id=paste(myName,"FirstModeling",sep=""))
+                                       var.import = 1,
+                                       #prevalence = 0.5,
+                                       #save.output = T, # recommended to leave true
+                                       do.full.models = F # use this option if you don't want a data split
+  )
   myEval <- biomod2::get_evaluations(myModels) # get all models evaluation
 
+  #### 5.0 projection over the globe under current conditions ####
+  myProj <- biomod2::BIOMOD_Projection(bm.mod = myModels,
+                                       new.env = envi.best,
+                                       proj.name = 'current',
+                                       #models.chosen = 'all',
+                                       #models.chosen = c('GLM', 'GAM', 'GBM', 'RF', 'ANN'),
+                                       #metric.binary = myEvals,
+                                       #compress = 'xz',
+                                       #build.clamping.mask = F,
+                                       nb.cbu=32#,
+                                       #output.format = '.grd',
+                                       #do.stack=T
+  )
+  myProj2 <- biomod2::get_predictions(myProj) # if you want to make custom plots, you can also get the projected map
 
-  #### 5.0 Ensembling the models ####
-  myEnsemble <- biomod2::BIOMOD_EnsembleModeling(modeling.output = myModels,
-                                                 chosen.models = 'all',
+
+  #### 6.0 Ensembling the models ####
+  myEnsemble <- biomod2::BIOMOD_EnsembleModeling(bm.mod = myModels,
+                                                 models.chosen = 'all',
                                                  em.by = 'PA_dataset+repet',
-                                                 eval.metric = NULL,
+                                                 metric.eval = myEvals,
+                                                 #metric.eval = NULL,
                                                  #eval.metric.quality.threshold = .5,
-                                                 models.eval.meth= myEvals,
+                                                 #models.eval.meth= myEvals,
                                                  prob.mean = T,
                                                  prob.cv = F, #don't use'
                                                  prob.ci = F, #prob.ci.alpha = 0.05,
@@ -82,17 +99,14 @@ run_SDM <- function(spname, domain=world(), res=1){
                                                  prob.mean.weight.decay = 'proportional')
   myEvalEM <- biomod2::get_evaluations(myEnsemble)[[1]] # get evaluation scores
 
-  #### 6.0 projection over the globe under current conditions ####
-  myProj <- biomod2::BIOMOD_Projection(modeling.output = myModels,
-                                       new.env = myExpl.sel,
-                                       proj.name = 'current',
-                                       selected.models = 'all',
-                                       binary.meth = myEvals,
-                                       compress = 'xz',
-                                       clamping.mask = F,
-                                       output.format = '.grd',
-                                       do.stack=T)
-  myProj2 <- biomod2::get_predictions(myProj) # if you want to make custom plots, you can also get the projected map
+  myProjEM <- biomod2::BIOMOD_EnsembleForecasting(bm.em = myEnsemble,
+                                                  bm.proj = myProj,
+                                                  models.chosen = 'all',
+                                                  metric.binary = myEvals,
+                                                  compress = 'xz',
+                                                  build.clamping.mask = F,
+                                                  #output.format = '.grd'
+  )
 
   myBinary <- plyr::llply(.data=c(1:length(myEvals)),
                           .fun=function(X){X.Eval <- myEvals[[X]]
@@ -100,14 +114,6 @@ run_SDM <- function(spname, domain=world(), res=1){
                                                   tolower(str_replace(spname, ' ', '.')), '_', X.Eval, 'bin.grd', sep=''))
                           names(X.Binary) <- paste(X.Eval, substr(myProj@models.projected, nchar(spname)+1, max(nchar(myProj@models.projected))), sep='')
                           return(X.Binary)}); myBinary <- stack(unlist(myBinary))
-
-  myProjEM <- biomod2::BIOMOD_EnsembleForecasting(EM.output = myEnsemble,
-                                                  projection.output = myProj,
-                                                  selected.models = 'all',
-                                                  binary.meth = myEvals,
-                                                  compress = 'xz',
-                                                  clamping.mask = F,
-                                                  output.format = '.grd')
 
   myBinaryEM <- raster::stack(paste(tolower(str_replace(spname, ' ', '.')), '\\proj_current\\proj_current_',
                                     tolower(str_replace(spname, ' ', '.')), '_ensemble_', myEvals[[1]], 'bin.grd', sep=''))
@@ -150,24 +156,20 @@ run_SDM <- function(spname, domain=world(), res=1){
 #   # 'Tsuga caroliniana',
 #   # 'Umbellularia californica' # Bay laurel
 # )
-#
 # sp_ems <- llply(.data=c(1:length(splist)),
 #                 .fun=function(x){EM_mod(splist[[x]], usa=T)},
 #                 .progress='text'); names(sp_ems) <- splist
-
 # pts <- BIEN::BIEN_occurrence_species(species=spname)
 # pts <-  read.csv('C:\\Users\\bjselige\\Documents\\tree_of_heaven\\Ailanthus.BIEN.csv')
 # pts <- gbif(genus=strsplit(x=spname, split=' ')[[1]][1], species=strsplit(x=spname, split=' ')[[1]][2],
 #             geo=T, sp=T, removeZeros=T, download=T, ext=extent(biovars[[1]]))
 #source('C:\\Users\\bjselige\\host_map\\get_pts.1.R')
 #pts <- get_pts.1(spname)
-
 # myBinary <-stack(paste(tolower(str_replace(spname, ' ', '.')), '\\proj_current\\proj_current_',
 #                        tolower(str_replace(spname, ' ', '.')), '_', myEvals, 'bin.grd', sep=''))
 # names(myBinary) <- rep(paste(myEvals, substr(myModels@models.computed, 15, 27), sep='_'), length(myEvals))
 # myBinary <- stack(list.files('C:\\Users\\bjselige\\host_map\\juglans.nigra\\proj_current\\individual_projections\\', 'bin.grd', full=T))
 # names(myBinary) <- rep(paste(myEvals, substr(myModels@models.computed, 15, 27), sep='_'), length(myEvals))
-
 # #### output plot
 # borders <- usa
 # rast <- myProjEM@proj@val
