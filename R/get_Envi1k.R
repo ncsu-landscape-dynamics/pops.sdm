@@ -103,10 +103,10 @@ get_Envi1k <- function(bio=F, elev=F, gdd=F, lc=F, pop=F, ptime=F, rnr=F, soil=F
   }
 
   if(soil==T){
-    soil.files <- c('Soil.pH_0cm.tif', 'Soil.pH.mean.1km.tif', 'Soil.pH.200cm.tif',
-                    'Soil.h2o.33kpa.0cm.tif', 'Soil.h2o.33kpa.mean.1km.tif',
-                    'Soil.h2o.33kpa.200cm.tif', 'Soil.h2o.1500kpa.0cm.tif',
-                    'Soil.h2o.1500kpa.mean.1km.tif', 'Soil.h2o.1500kpa.200cm.tif')
+    soil.files <- c('Soil_pH_0cm.tif', 'Soil_pH_mean_1km.tif', 'Soil_pH_200cm.tif',
+                    'Soil_h2o_33kpa.0cm.tif', 'Soil_h2o_33kpa_mean_1km.tif',
+                    'Soil_h2o_33kpa_200cm.tif', 'Soil_h2o_1500kpa_0cm.tif',
+                    'Soil_h2o_1500kpa_mean_1km.tif', 'Soil_h2o_1500kpa_200cm.tif')
     solvar <- terra::rast(paste(geodir, '\\soils\\', soil.files, sep=''))
     names(solvar) <- c('Soil.pH.0cm', 'Soil.pH.mean', 'Soil.pH.200cm',
                        'Soil.h2o.33.0cm', 'Soil.h2o.33.mean', 'Soil.h2o.33.200cm',
