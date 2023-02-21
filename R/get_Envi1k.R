@@ -83,7 +83,7 @@ get_Envi1k <- function(bio=F, elev=F, gdd=F, lc=F, pop=F, ptime=F, rnr=F, soil=F
   if(ptime==T){
     getPrecipTiming <- function(){
       ptpath <- paste(geodir, '\\precip.timing.tif', sep='')
-      if(file.exists(ptpath)){prect <- rast(ptpath)}
+      if(file.exists(ptpath)){prect <- terra::rast(ptpath)}
       if(!file.exists(ptpath)){print('Calculating Precip Timing (DJF-JJA)')
         prec <- geodata::worldclim_global(var='prec', res=.5, path=geodir)
         prect <- terra::app(x=prec, cores=detectCores()/2,
