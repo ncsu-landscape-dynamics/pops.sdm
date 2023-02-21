@@ -62,13 +62,13 @@ get_Envi1k <- function(bio=F, elev=F, gdd=F, lc=F, pop=F, ptime=F, rnr=F, soil=F
   }
 
   if(lc==T){
-    globe <- geodata::worldclim_global(var='bio', res=.5, path=geodir)
-    built <- terra::extend(x=geodata::landcover(var='built', path=geodir), y=ext(globe))
-    cropl <- terra::extend(x=geodata::landcover(var="cropland", path=geodir), y=ext(globe))
-    grass <- terra::extend(x=geodata::landcover(var='grassland', path=geodir), y=ext(globe))
-    shrub <- terra::extend(x=geodata::landcover(var='shrubs', path=geodir), y=ext(globe))
-    trees <- terra::extend(x=geodata::landcover(var='trees', path=geodir), y=ext(globe))
-    wetld <- terra::extend(x=geodata::landcover(var='wetland', path=geodir), y=ext(globe))
+    globe <- geodata::worldclim_global(var='bio', res=.5, path=geodir); globext <- terra::ext(globe)
+    built <- terra::extend(x=geodata::landcover(var='built', path=geodir), y=globext)
+    cropl <- terra::extend(x=geodata::landcover(var="cropland", path=geodir), y=globext)
+    grass <- terra::extend(x=geodata::landcover(var='grassland', path=geodir), y=globext)
+    shrub <- terra::extend(x=geodata::landcover(var='shrubs', path=geodir), y=globext)
+    trees <- terra::extend(x=geodata::landcover(var='trees', path=geodir), y=globext)
+    wetld <- terra::extend(x=geodata::landcover(var='wetland', path=geodir), y=globext)
     lcvar <- c(built, cropl, grass, shrub, trees, wetld)
     names(lcvar) <- c('Built', 'Cropland', 'Grassland', 'Shrubs', 'Trees', 'Wetland')
     lccl <- data.frame(var=names(lcvar), cluster='Landcover 1')
