@@ -70,7 +70,7 @@ get_Envi1k <- function(bio=F, elev=F, gdd=F, lc=F, pop=F, ptime=F, rnr=F, soil=F
     trees <- terra::extend(x=geodata::landcover(var='trees', path=geodir), y=globext)
     wetld <- terra::extend(x=geodata::landcover(var='wetland', path=geodir), y=globext)
     lcvar <- c(built, cropl, grass, shrub, trees, wetld)
-    names(lcvar) <- c('Built', 'Cropland', 'Grassland', 'Shrubs', 'Trees', 'Wetland')
+    #names(lcvar) <- c('Built', 'Cropland', 'Grassland', 'Shrubs', 'Trees', 'Wetland')
     lccl <- data.frame(var=names(lcvar), cluster='Landcover 1')
   }
 
@@ -86,7 +86,7 @@ get_Envi1k <- function(bio=F, elev=F, gdd=F, lc=F, pop=F, ptime=F, rnr=F, soil=F
       if(file.exists(ptpath)){prect <- terra::rast(ptpath)}
       if(!file.exists(ptpath)){print('Calculating Precip Timing (DJF-JJA)')
         prec <- geodata::worldclim_global(var='prec', res=.5, path=geodir)
-        prect <- terra::app(x=prec, cores=detectCores()/2,
+        prect <- terra::app(x=prec, cores=parallel::detectCores()/2,
                             fun=function(x){return(sum(x[[12]], x[[1]], x[[2]])-sum(x[[6]], x[[7]], x[[8]]))})
         terra::writeRaster(prect, filename=ptpath); closeAllConnections()
       }
