@@ -3,5 +3,5 @@
 
 country <- function(names){
   country <- rnaturalearth::ne_countries(scale=10, country=names)
-  return(country)
+  return(terra::vect(country))
 }

@@ -4,5 +4,5 @@
 state <- function(names){
   usa <- rnaturalearth::ne_states(country='United States of America')
   ste <- usa[usa$name%in%names,]
-  return(ste)
+  return(terra::vect(ste))
 }

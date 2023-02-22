@@ -28,8 +28,8 @@ get_pts.1 <- function(spname, domain=NULL){
   sp.pts <- unique(sp.pts[which(unique(!is.na(sp.pts$longitude), !is.na(sp.pts$latitude))),])
   sp.pts <- terra::vect(sp::SpatialPoints(sp.pts, sp::CRS('+proj=longlat +datum=WGS84 +no_defs +ellps=WGS84 +towgs84=0,0,0')))
 
-  if(is.null(domain)){sp.pts <- terra::crop(x=sp.pts, y=terra::vect(pops.sdm::world()))}
-  if(!is.null(domain)){sp.pts <- terra::crop(x=sp.pts, y=terra::vect(domain))}
+  if(is.null(domain)){sp.pts <- terra::crop(x=sp.pts, y=pops.sdm::world())}
+  if(!is.null(domain)){sp.pts <- terra::crop(x=sp.pts, y=domain)}
 
   return(sp.pts)
 }
