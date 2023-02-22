@@ -63,7 +63,7 @@ get_Envi1k <- function(bio=F, elev=F, gdd=F, lc=F, pop=F, ptime=F, rnr=F, soil=F
 
   if(lc==T){
     lcpath <- paste(geodir, 'landcover\\', sep='')
-    if(file.exists(ptpath)){
+    if(file.exists(lcpath)){
       built <- terra::rast(paste(lcpath, 'built.tif', sep=''))
       cropl <- terra::rast(paste(lcpath, 'cropl.tif', sep=''))
       grass <- terra::rast(paste(lcpath, 'grass.tif', sep=''))
@@ -71,7 +71,7 @@ get_Envi1k <- function(bio=F, elev=F, gdd=F, lc=F, pop=F, ptime=F, rnr=F, soil=F
       trees <- terra::rast(paste(lcpath, 'trees.tif', sep=''))
       wetld <- terra::rast(paste(lcpath, 'wetld.tif', sep=''))
     }
-    if(!file.exists(ptpath)){
+    if(!file.exists(lcpath)){
       globe <- geodata::worldclim_global(var='bio', res=.5, path=geodir); globext <- terra::ext(globe)
       built <- terra::extend(x=geodata::landcover(var='built', path=geodir), y=globext)
       cropl <- terra::extend(x=geodata::landcover(var="cropland", path=geodir), y=globext)
