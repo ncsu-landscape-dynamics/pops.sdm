@@ -62,7 +62,7 @@ get_Envi1k <- function(bio=F, elev=F, gdd=F, lc=F, pop=F, ptime=F, rnr=F, soil=F
   }
 
   if(lc==T){
-  lcpath <- paste(geodir, 'landcover\\', sep='')
+    lcpath <- paste(geodir, 'landcover\\', sep='')
     if(file.exists(ptpath)){
       built <- terra::rast(paste(lcpath, 'built.tif', sep=''))
       cropl <- terra::rast(paste(lcpath, 'cropl.tif', sep=''))
@@ -72,19 +72,19 @@ get_Envi1k <- function(bio=F, elev=F, gdd=F, lc=F, pop=F, ptime=F, rnr=F, soil=F
       wetld <- terra::rast(paste(lcpath, 'wetld.tif', sep=''))
     }
     if(!file.exists(ptpath)){
-    globe <- geodata::worldclim_global(var='bio', res=.5, path=geodir); globext <- terra::ext(globe)
-    built <- terra::extend(x=geodata::landcover(var='built', path=geodir), y=globext)
-    cropl <- terra::extend(x=geodata::landcover(var="cropland", path=geodir), y=globext)
-    grass <- terra::extend(x=geodata::landcover(var='grassland', path=geodir), y=globext)
-    shrub <- terra::extend(x=geodata::landcover(var='shrubs', path=geodir), y=globext)
-    trees <- terra::extend(x=geodata::landcover(var='trees', path=geodir), y=globext)
-    wetld <- terra::extend(x=geodata::landcover(var='wetland', path=geodir), y=globext)
-    terra::writeRaster(built, filename=paste(lcpath, 'built.tif', sep=''))
-    terra::writeRaster(cropl, filename=paste(lcpath, 'cropl.tif', sep=''))
-    terra::writeRaster(grass, filename=paste(lcpath, 'grass.tif', sep=''))
-    terra::writeRaster(shrub, filename=paste(lcpath, 'shrub.tif', sep=''))
-    terra::writeRaster(trees, filename=paste(lcpath, 'trees.tif', sep=''))
-    terra::writeRaster(wetld, filename=paste(lcpath, 'wetld.tif', sep=''))
+      globe <- geodata::worldclim_global(var='bio', res=.5, path=geodir); globext <- terra::ext(globe)
+      built <- terra::extend(x=geodata::landcover(var='built', path=geodir), y=globext)
+      cropl <- terra::extend(x=geodata::landcover(var="cropland", path=geodir), y=globext)
+      grass <- terra::extend(x=geodata::landcover(var='grassland', path=geodir), y=globext)
+      shrub <- terra::extend(x=geodata::landcover(var='shrubs', path=geodir), y=globext)
+      trees <- terra::extend(x=geodata::landcover(var='trees', path=geodir), y=globext)
+      wetld <- terra::extend(x=geodata::landcover(var='wetland', path=geodir), y=globext)
+      terra::writeRaster(built, filename=paste(lcpath, 'built.tif', sep=''))
+      terra::writeRaster(cropl, filename=paste(lcpath, 'cropl.tif', sep=''))
+      terra::writeRaster(grass, filename=paste(lcpath, 'grass.tif', sep=''))
+      terra::writeRaster(shrub, filename=paste(lcpath, 'shrub.tif', sep=''))
+      terra::writeRaster(trees, filename=paste(lcpath, 'trees.tif', sep=''))
+      terra::writeRaster(wetld, filename=paste(lcpath, 'wetld.tif', sep=''))
     }
     lcvar <- c(built, cropl, grass, shrub, trees, wetld)
     lccl <- data.frame(var=names(lcvar), cluster='Landcover 1')
