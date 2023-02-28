@@ -17,7 +17,7 @@ get_BestVars <- function(envi, pts){
   myResp2[myResp2==0] <- NA # setting 'true absences' to NA
   myXY2 <- terra::crds(pts.s) # the XY coordinates of species data
   myName2 <- 'test'
-  nreps <- 3
+  nreps <- 1
 
   # algos <- list(c('SRE'), c('GLM'), c('RF'), c('MAXENT.Phillips'))
   # names(algos) <- c('SRE', 'GLM', 'RF', 'MAXENT.Phillips')
@@ -62,7 +62,7 @@ get_BestVars <- function(envi, pts){
                                                                      metric.eval = c('ROC', 'TSS'),
                                                                      save.output = T, # recommended to leave true
                                                                      scale.models = F, #experimental don't use
-                                                                     do.full.models = F,
+                                                                     do.full.models = T,
                                                                      modeling.id = paste(myName2,"Modeling",sep=""))
 
                                 # Evaluation
