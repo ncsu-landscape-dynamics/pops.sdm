@@ -51,7 +51,7 @@ get_BestVars <- function(envi, pts){
                                                                         resp.name = myName2,
                                                                         PA.nb.rep = 1,
                                                                         PA.strategy = 'user.defined',
-                                                                        PA.user.table = PA.df)
+                                                                        PA.table = PA.df) #PA.user.table = PA.df)
 
                                 # 3. Computing the models
                                 myModels <- biomod2::BIOMOD_Modeling(data = myData, #bm.format = myData,
