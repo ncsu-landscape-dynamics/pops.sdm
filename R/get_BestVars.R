@@ -21,8 +21,10 @@ get_BestVars <- function(envi, pts){
 
   # algos <- list(c('SRE'), c('GLM'), c('RF'), c('MAXENT.Phillips'))
   # names(algos) <- c('SRE', 'GLM', 'RF', 'MAXENT.Phillips')
-  algos <- list(c('SRE'), c('RF'), c('MAXENT'))
-  names(algos) <- c('SRE', 'RF', 'MAXENT')
+  # algos <- list(c('SRE'), c('RF'), c('MAXENT'))
+  # names(algos) <- c('SRE', 'RF', 'MAXENT')
+  algos <- list(c('SRE'))
+  names(algos) <- c('SRE')
 
   i <- 1#; t.list <- list()
   k <- 1; k.list <- list()
@@ -52,17 +54,17 @@ get_BestVars <- function(envi, pts){
                                                                         PA.user.table = PA.df)
 
                                 # 3. Computing the models
-                                myModels <- biomod2::BIOMOD_Modeling(bm.format = myData,
-                                                                     bm.options = myOptions,
+                                myModels <- biomod2::BIOMOD_Modeling(data = myData, #bm.format = myData,
+                                                                     models.options = myOptions, #bm.options = myOptions,
                                                                      models = i.algo,
-                                                                     nb.rep = 1, #number of runs
-                                                                     data.split.perc = 100, #50,
-                                                                     prevalence = NULL,
-                                                                     var.import = 0,
-                                                                     metric.eval = c('ROC', 'TSS'),
-                                                                     save.output = T, # recommended to leave true
-                                                                     scale.models = F, #experimental don't use
-                                                                     do.full.models = T,
+                                                                     NbRunEval = 1, #nb.rep = 1, #number of runs
+                                                                     DataSplit = 100, #data.split.perc = 100, #50,
+                                                                     # var.import = 0,
+                                                                     models.eval.meth = c('ROC', 'TSS'), # metric.eval = c('ROC', 'TSS'),
+                                                                     # save.output = T, # recommended to leave true
+                                                                     # scale.models = F, #experimental don't use
+                                                                     do.full.models = F,
+                                                                     # seed.val=1991,
                                                                      modeling.id = paste(myName2,"Modeling",sep=""))
 
                                 # Evaluation
