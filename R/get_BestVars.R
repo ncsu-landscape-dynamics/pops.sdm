@@ -19,8 +19,8 @@ get_BestVars <- function(envi, pts){
   myName2 <- 'test'
   nreps <- 1
 
-  # algos <- list(c('SRE'), c('GLM'), c('RF'), c('MAXENT.Phillips'))
-  # names(algos) <- c('SRE', 'GLM', 'RF', 'MAXENT.Phillips')
+   algos <- list(c('SRE'), c('GLM'), c('RF'), c('MAXENT.Phillips'))
+   names(algos) <- c('SRE', 'GLM', 'RF', 'MAXENT.Phillips')
   # algos <- list(c('SRE'), c('RF'), c('MAXENT'))
   # names(algos) <- c('SRE', 'RF', 'MAXENT')
   algos <- list(c('SRE')); names(algos) <- c('SRE')
