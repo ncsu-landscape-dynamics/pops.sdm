@@ -23,8 +23,8 @@ get_BestVars <- function(envi, pts){
   # names(algos) <- c('SRE', 'GLM', 'RF', 'MAXENT.Phillips')
   # algos <- list(c('SRE'), c('RF'), c('MAXENT'))
   # names(algos) <- c('SRE', 'RF', 'MAXENT')
-  algos <- list(c('SRE'))
-  names(algos) <- c('SRE')
+  algos <- list(c('SRE')); names(algos) <- c('SRE')
+  evals <- c('CSI', 'ROC', 'TSS', 'ACCURACY', 'ETS', 'BIAS', 'KAPPA')
 
   i <- 1#; t.list <- list()
   k <- 1; k.list <- list()
@@ -60,7 +60,7 @@ get_BestVars <- function(envi, pts){
                                                                      NbRunEval = 1, #nb.rep = 1, #number of runs
                                                                      DataSplit = 100, #data.split.perc = 100, #50,
                                                                      # var.import = 0,
-                                                                     models.eval.meth = c('ROC', 'TSS'), # metric.eval = c('ROC', 'TSS'),
+                                                                     models.eval.meth = evals, # metric.eval = c('ROC', 'TSS'),
                                                                      # save.output = T, # recommended to leave true
                                                                      # scale.models = F, #experimental don't use
                                                                      do.full.models = F,
@@ -69,7 +69,7 @@ get_BestVars <- function(envi, pts){
 
                                 # Evaluation
                                 myEval <- biomod2::get_evaluations(myModels) # get all models evaluation
-                                eval.v <- c(myEval[c('ROC','TSS'),"Testing.data",,,]) #myEval$calibration[myEval$metric.eval%in%c('ROC', 'TSS')]#eval.v <- c(myEval[c('ROC','TSS'),"Testing.data",,,])
+                                eval.v <- c(myEval[evals,"Testing.data",,,]) #myEval$calibration[myEval$metric.eval%in%c('ROC', 'TSS')]#eval.v <- c(myEval[c('ROC','TSS'),"Testing.data",,,])
                                 return(mean(eval.v))
                               })
         row.names(k.test) <- k.names
