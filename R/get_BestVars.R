@@ -23,7 +23,7 @@ get_BestVars <- function(envi, pts){
    names(algos) <- c('SRE', 'GLM', 'RF', 'MAXENT.Phillips')
   # algos <- list(c('SRE'), c('RF'), c('MAXENT'))
   # names(algos) <- c('SRE', 'RF', 'MAXENT')
-  algos <- list(c('SRE')); names(algos) <- c('SRE')
+  #algos <- list(c('SRE')); names(algos) <- c('SRE')
   evals <- c('CSI', 'ROC', 'TSS', 'ACCURACY', 'ETS', 'BIAS', 'KAPPA')
 
   i <- 1#; t.list <- list()
