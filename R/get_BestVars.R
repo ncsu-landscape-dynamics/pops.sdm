@@ -21,8 +21,8 @@ get_BestVars <- function(envi, pts){
 
   # algos <- list(c('SRE'), c('GLM'), c('RF'), c('MAXENT.Phillips'))
   # names(algos) <- c('SRE', 'GLM', 'RF', 'MAXENT.Phillips')
-   algos <- list(c('SRE'), c('RF'), c('MAXENT'))
-   names(algos) <- c('SRE', 'RF', 'MAXENT')
+  algos <- list(c('SRE'), c('RF'), c('MAXENT.Phillips'))
+  names(algos) <- c('SRE', 'RF', 'MAXENT.Phillips')
   #algos <- list(c('SRE')); names(algos) <- c('SRE')
   evals <- c('CSI', 'ROC', 'TSS', 'ACCURACY', 'ETS', 'BIAS', 'KAPPA')
 
@@ -68,9 +68,10 @@ get_BestVars <- function(envi, pts){
                                                                      modeling.id = paste(myName2,"Modeling",sep=""))
 
                                 # Evaluation
+                                options(digits = 22)
                                 myEval <- biomod2::get_evaluations(myModels) # get all models evaluation
                                 eval.v <- c(myEval[evals,"Testing.data",,,]) #myEval$calibration[myEval$metric.eval%in%c('ROC', 'TSS')]#eval.v <- c(myEval[c('ROC','TSS'),"Testing.data",,,])
-                                return(mean(eval.v))
+                                return(mean(eval.v)); options(digits=3)
                               })
         row.names(k.test) <- k.names
 
