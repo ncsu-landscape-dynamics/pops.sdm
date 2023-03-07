@@ -71,7 +71,7 @@ get_BestVars <- function(envi, pts){
                                 options(digits = 22)
                                 myEval <- biomod2::get_evaluations(myModels) # get all models evaluation
                                 eval.v <- c(myEval[evals,"Testing.data",,,]) #myEval$calibration[myEval$metric.eval%in%c('ROC', 'TSS')]#eval.v <- c(myEval[c('ROC','TSS'),"Testing.data",,,])
-                                return(mean(eval.v)); options(digits=3)
+                                return(mean(eval.v))
                               })
         row.names(k.test) <- k.names
 
@@ -125,5 +125,5 @@ get_BestVars <- function(envi, pts){
 
   i.d2 <- i.d2[order(i.d2$score, decreasing=T),];  i.d2 <- i.d2[1:max(envi.cv),]
   i.stack <- raster::stack(envi2[[i.d2[1:max(envi.cv),'var'][!grepl('NA_',i.d2[1:max(envi.cv),'var'])]]])
-  return(i.stack)
+  return(i.stack); options(digits=3)
 }
