@@ -10,17 +10,19 @@
 #' @export
 
 run_SDM <- function(spname, domain=world(), res=1){
-
   #### 1.0 Load Environmental data and species data ####
   #if(sources(domain)==sources(world())){
-  envi.1k <- pops.sdm::get_Envi1k(bio=T, elev=T, soil=T) #envi.cv <- envi.1k$clust
-  envi <- terra::crop(x=envi.1k$rast, y=terra::vect(domain), mask=T)#; envi.1k$rast <- envi
+  envi.1k <- pops.sdm::get_Envi1k(bio=T) #envi.cv <- envi.1k$clust
+  envi <- terra::crop(x=envi.1k$rast, y=domain, mask=T)#; envi.1k$rast <- envi
   pts.1 <- pops.sdm::get_pts.1(spname=spname, domain=domain)
 
-  if(res>1){envi <- terra::aggregate(envi, fact=res, fun='mean')}
-  if(res<1){envi <- terra::disagg(envi, fact=1/res, method='bilinear')}
-
   #### 1.1 Prep data ####
+  if(is.null(res)){res <- 1}
+  if(res!=1){
+    if(res>1){envi <- terra::aggregate(envi, fact=res, fun='mean')}
+    if(res<1){envi <- terra::disagg(envi, fact=1/res, method='bilinear')}
+  }
+
   pts.r <- terra::rasterize(x=pts.1, y=envi, fun='length', background=0)
   pts.r <- (pts.r*(envi[[1]]*0+1))>0
   pts.2 <- terra::as.points(pts.r)
@@ -41,105 +43,104 @@ run_SDM <- function(spname, domain=world(), res=1){
                                           expl.var = envi.best,
                                           resp.xy = myRespXY,
                                           resp.name = myName,
-                                          #dir.name =
                                           PA.nb.rep = 1,
                                           PA.strategy = 'random',
                                           PA.nb.absences = sum(myResp, na.rm=T))
   # Notes on algorithm choices; CTA is redundant with Random Forest, FDA and SRE have relatively low performance
-  myAlgos <- c('GLM', 'GAM', 'GBM', 'RF', 'ANN')#, 'MAXENT.Phillips')
-  # Notes on evaluation methods: POD/SR/FR is not useful, KAPPA, ACCURACY, TSS, and ETS all get the same results
-  myEvals <- c('CSI', 'ROC', 'TSS', 'ACCURACY', 'ETS', 'BIAS')
+  myAlgos <- c('GAM', 'GBM', 'GLM', 'RF', 'ANN', 'MARS', 'MAXENT.Phillips')
+  # Notes on evaluation methods: POD/SR/FR/BIAS is not useful, KAPPA, and TSS get similar results
+  myEvals <- c('ACCURACY', 'CSI', 'ETS', 'ROC', 'TSS')
 
 
   #### 4.0 Run and evaluate the models ####
-  myModels <- biomod2::BIOMOD_Modeling(bm.format = myData,
-                                       modeling.id=paste(myName,"AllModels",sep=""),
+  myModels <- biomod2::BIOMOD_Modeling(data = myData,
+                                       modeling.id = paste(myName,"AllModels",sep=""),
                                        models = myAlgos,
-                                       bm.options = myOptions,
-                                       nb.rep = 1, #3, #number of runs
-                                       data.split.perc = 80,
-                                       metric.eval = myEvals,
-                                       var.import = 1,
-                                       #prevalence = 0.5,
-                                       #save.output = T, # recommended to leave true
-                                       do.full.models = F # use this option if you don't want a data split
-  )
+                                       models.options = myOptions,
+                                       NbRunEval = 2, #3, #number of runs
+                                       DataSplit = 80,
+                                       models.eval.meth = myEvals,
+                                       VarImport = 1,
+                                       do.full.models = F) # use this option if you don't want a data split
   myEval <- biomod2::get_evaluations(myModels) # get all models evaluation
 
+
   #### 5.0 projection over the globe under current conditions ####
-  myProj <- biomod2::BIOMOD_Projection(bm.mod = myModels,
+  myProj <- biomod2::BIOMOD_Projection(modeling.output = myModels,
                                        new.env = envi.best,
                                        proj.name = 'current',
-                                       #models.chosen = 'all',
-                                       #models.chosen = c('GLM', 'GAM', 'GBM', 'RF', 'ANN'),
-                                       #metric.binary = myEvals,
                                        #compress = 'xz',
                                        #build.clamping.mask = F,
-                                       nb.cbu=32#,
                                        #output.format = '.grd',
                                        #do.stack=T
-  )
+                                       #nb.cbu=32,
+                                       binary.meth = myEvals)
   myProj2 <- biomod2::get_predictions(myProj) # if you want to make custom plots, you can also get the projected map
 
 
   #### 6.0 Ensembling the models ####
-  myEnsemble <- biomod2::BIOMOD_EnsembleModeling(bm.mod = myModels,
-                                                 models.chosen = 'all',
-                                                 em.by = 'PA_dataset+repet',
-                                                 metric.eval = myEvals,
-                                                 #metric.eval = NULL,
-                                                 #eval.metric.quality.threshold = .5,
-                                                 #models.eval.meth= myEvals,
+  myEnsemble <- biomod2::BIOMOD_EnsembleModeling(modeling.output = myModels,
+                                                 chosen.models = 'all',
+                                                 em.by = 'all', #'all' combines all algos and PA runs into a single ensemble.
+                                                 eval.metric = myEvals,
+                                                 models.eval.meth = myEvals,
                                                  prob.mean = T,
-                                                 prob.cv = F, #don't use'
-                                                 prob.ci = F, #prob.ci.alpha = 0.05,
-                                                 prob.median = F,
-                                                 committee.averaging = F,
-                                                 prob.mean.weight = F, # leave on true
-                                                 prob.mean.weight.decay = 'proportional')
-  myEvalEM <- biomod2::get_evaluations(myEnsemble)[[1]] # get evaluation scores
+                                                 prob.cv = T,
+                                                 prob.ci = T, prob.ci.alpha = 0.05,
+                                                 #prob.median = F, prob.mean.weight = T,
+                                                 #prob.mean.weight.decay = 'proportional',
+                                                 committee.averaging = T)
+  myEvalEM <- biomod2::get_evaluations(myEnsemble) # get evaluation scores
 
-  myProjEM <- biomod2::BIOMOD_EnsembleForecasting(bm.em = myEnsemble,
-                                                  bm.proj = myProj,
-                                                  models.chosen = 'all',
-                                                  metric.binary = myEvals,
+
+  myProjEM <- biomod2::BIOMOD_EnsembleForecasting(EM.output = myEnsemble,
+                                                  projection.output = myProj,
+                                                  selected.models = 'all',
+                                                  binary.meth = myEvals,
                                                   compress = 'xz',
-                                                  build.clamping.mask = F,
-                                                  #output.format = '.grd'
-  )
+                                                  build.clamping.mask = F)
+  EM.mean <- raster::mean(myProjEM@proj@val[[which(grepl('EMmean', names(myProjEM@proj@val)))]])
+  EM.cv <- raster::mean(myProjEM@proj@val[[which(grepl('EMcv', names(myProjEM@proj@val)))]])
+  EM.ca <- raster::mean(myProjEM@proj@val[[which(grepl('EMca', names(myProjEM@proj@val)))]])
+  EM.ciInf <- raster::mean(myProjEM@proj@val[[which(grepl('EMciInf', names(myProjEM@proj@val)))]])
+  EM.ciSup <- raster::mean(myProjEM@proj@val[[which(grepl('EMciSup', names(myProjEM@proj@val)))]])
+  p.out <- raster::stack(EM.mean, EM.cv, EM.ca, EM.ciInf, EM.ciSup)
+  names(p.out) <- c('mean', 'cv', 'ca', 'ciInf', 'ciSup')
+  #p.out <- mean(terra::unwrap(myProjEM@proj.out@val))
+
 
   myBinary <- plyr::llply(.data=c(1:length(myEvals)),
                           .fun=function(X){X.Eval <- myEvals[[X]]
-                          X.Binary <- stack(paste(tolower(str_replace(spname, ' ', '.')), '\\proj_current\\proj_current_',
-                                                  tolower(str_replace(spname, ' ', '.')), '_', X.Eval, 'bin.grd', sep=''))
-                          names(X.Binary) <- paste(X.Eval, substr(myProj@models.projected, nchar(spname)+1, max(nchar(myProj@models.projected))), sep='')
-                          return(X.Binary)}); myBinary <- stack(unlist(myBinary))
+                          X.Binary <- raster::stack(paste(tolower(stringr::str_replace(spname, ' ', '.')),
+                                                          '\\proj_current\\proj_current_',
+                                                          tolower(stringr::str_replace(spname, ' ', '.')),
+                                                          '_', X.Eval, 'bin.tif', sep=''))
+                          #names(X.Binary) <- paste(X.Eval, substr(myProj@models.projected, nchar(spname)+1, max(nchar(myProj@models.projected))), sep='')
+                          return(X.Binary)}); myBinary <- raster::stack(unlist(myBinary))
 
-  myBinaryEM <- raster::stack(paste(tolower(str_replace(spname, ' ', '.')), '\\proj_current\\proj_current_',
-                                    tolower(str_replace(spname, ' ', '.')), '_ensemble_', myEvals[[1]], 'bin.grd', sep=''))
-  names(myBinaryEM) <- myEvals
-  p.out <- myProjEM@proj@val[[1]]
+  myBinaryEM <- raster::stack(paste(tolower(stringr::str_replace(spname, ' ', '.')), '\\proj_current\\proj_current_',
+                                    tolower(stringr::str_replace(spname, ' ', '.')), '_ensemble_', myEvals[[1]], 'bin.tif', sep=''))
+  #names(myBinaryEM) <- myEvals
 
   ##### 5. Thresholding
-  p2 <- p.out
-  trs <- seq(min(values(p2),na.rm=T), max(values(p2),na.rm=T), by=(max(values(p2),na.rm=T)-min(values(p2),na.rm=T))/100)
+  p2 <- p.out$mean
+  p2.min <- min(values(p2),na.rm=T); p2.max <- max(values(p2),na.rm=T)
+  trs <- seq(p2.min, p2.max, by=((p2.max-p2.min)/100))
+
   trs.metrics <- plyr::ldply(.data=c(1:length(trs)),
                              .fun=function(X){
-                               p2.tr <- rast(p2>trs[X])
-                               x.zero <- sum(extract(x=p2.tr, y=pts)==0, na.rm=T)/length(pts)
+                               p2.tr <- p2>trs[X]
+                               x.zero <- sum(raster::extract(x=p2.tr, y=as(pts.1, 'Spatial'))==0, na.rm=T)/length(pts.1)
                                x.area <- sum(values(p2.tr), na.rm=T)/length(na.omit(p2[]))
                                x.score <- 1 - x.zero - x.area
                                df.out <- data.frame('trs'=trs[X], 'zero'=x.zero, 'area'=x.area, 'score'=x.score, row.names=trs[X])
-                               return(df.out)
-                             }, .progress = 'text')
+                               return(df.out)}, .progress = 'text')
 
   tr.best <- trs.metrics[which.max(trs.metrics$score),]
-  p.tr <- p.out>tr.best$trs
-  p3 <- raster::stack(myProjEM@proj@val[[1]], p.tr); names(p3) <- c('Raw', 'Binary')
-  p3 <- raster::stack(p3, myBinaryEM)
-  myEval2 <- list(Eval=myEval, Ensemble=myEvalEM, BJS.metrics=list('best'=tr.best, 'full'=trs.metrics))
-  outlist <- list(myData, myModels, myEval2, myProj2, p3)
-  names(outlist) <- c('Data', 'Model', 'Evaluation', 'Projections', 'Ensemble')
+  p.tr <- p.out$mean>tr.best$trs
+  p3 <- raster::stack((p.out$mean), (p.tr)); names(p3) <- c('Raw', 'Binary')#p3 <- raster::stack(p3, myBinaryEM)
+  myEval2 <- list('All'=myEval, 'Ensemble'=myEvalEM, 'trs.metrics'=list('best'=tr.best$trs, 'full'=trs.metrics))
+  outlist <- list('Data'=myData, 'Model'=myModels, 'Evaluation'=myEval2, 'Projections'=list('All'=myProj2, 'Ensemble'=p3))
   return(outlist)
 }
 

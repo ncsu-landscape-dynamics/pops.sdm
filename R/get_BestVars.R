@@ -17,7 +17,7 @@ get_BestVars <- function(envi, pts){
   myResp2[myResp2==0] <- NA # setting 'true absences' to NA
   myXY2 <- terra::crds(pts.s) # the XY coordinates of species data
   myName2 <- 'test'
-  nreps <- 1
+  nreps <- 1 #unnecessary since running full models yields same results, no extra reps needed
 
   # algos <- list(c('SRE'), c('GLM'), c('RF'), c('MAXENT.Phillips'))
   # names(algos) <- c('SRE', 'GLM', 'RF', 'MAXENT.Phillips')
