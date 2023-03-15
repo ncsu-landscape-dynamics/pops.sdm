@@ -95,9 +95,7 @@ run_SDM <- function(spname, domain=world(), res=1){
                                                  em.by = 'all', #'all' combines all algos and PA runs into a single ensemble.
                                                  eval.metric = 'all',#   eval.metric = 'TSS',
                                                  models.eval.meth = myEvals,
-                                                 prob.mean = F,
-                                                 prob.cv = F,
-                                                 prob.ci = F, #prob.ci.alpha = 0.05,
+                                                 prob.mean = F, prob.cv = F, prob.ci = F, #prob.ci.alpha = 0.05,
                                                  committee.averaging = T)
   myEvalEM <- biomod2::get_evaluations(myEnsemble) # get evaluation scores
   myEvalCA <- biomod2::get_evaluations(myEnsembleCA)
