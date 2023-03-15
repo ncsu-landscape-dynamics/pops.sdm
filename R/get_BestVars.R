@@ -19,25 +19,25 @@ get_BestVars <- function(envi, pts){
   myName2 <- 'test'
   nreps <- 1 #unnecessary since running full models yields same results, no extra reps needed
 
-  # algos <- list(c('SRE'), c('GLM'), c('RF'), c('MAXENT.Phillips'))
-  # names(algos) <- c('SRE', 'GLM', 'RF', 'MAXENT.Phillips')
-  # algos <- list(c('SRE'), c('RF'), c('MAXENT.Phillips'))
-  # names(algos) <- c('SRE', 'RF', 'MAXENT.Phillips')
-  #  algos <- list(c('SRE'), c('GLM'), c('RF'), c('MAXENT.Phillips'))
-  #  names(algos) <- c('SRE', 'GLM', 'RF', 'MAXENT.Phillips')
-  # algos <- list(c('SRE'), c('RF'), c('MAXENT'))
-  # names(algos) <- c('SRE', 'RF', 'MAXENT')
-  algos <- list(c('SRE')); names(algos) <- c('SRE')
-  evals <- c('CSI', 'ROC', 'TSS', 'ACCURACY', 'ETS', 'BIAS', 'KAPPA')
+  # Notes on algorithm selection. GBM and ANN do not work with all data used/no split.
+  # SRE, CTA, FDA, GLM, GAM, RF, and MARS are comparable in speed (SRE fastest, MARS slowest by about 25%, rest in respective order)
+  # Maxent is approximately 2.5 to 3 times slower than the previous 7 algorithms mentioned
+  # RF yields extremely high accuracy scores, may bias results, exchanged for CTA which is similar
+  # Running all algorithms at once is approximately 25% faster than running them separately.
+  #algos <- list('SRE', 'CTA', 'FDA', 'GLM', 'GAM', 'MARS', 'MAXENT.Phillips', c('SRE', 'CTA', 'FDA', 'GLM', 'GAM', 'RF', 'MARS', 'MAXENT.Phillips'))
+  #names(algos) <- c('SRE', 'CTA', 'FDA', 'GLM', 'GAM',  'MARS', 'MAXENT.Phillips', 'ALL')
+  algos <- list(c('SRE', 'CTA', 'FDA', 'GLM', 'GAM', 'RF', 'MARS', 'MAXENT.Phillips'))
+  names(algos) <- c('ALL')
+  evals <- c('ACCURACY', 'CSI', 'ETS', 'ROC', 'TSS') #Notes on evals; Kappa similar to tss, bias/far/sr/pod not very useful,
 
-  i <- 1#; t.list <- list()
+  i <- 1; t.list <- data.frame('algos'=names(algos), 'time'=rep(NA, length(algos)))
   k <- 1; k.list <- list()
   j <- 1; j.list <- list(); j.data <- data.frame()
 
-  for(i in 1:length(algos)){
-    i.algo <- algos[[i]]; n.algo <- names(algos)[i] #i.t1 <- Sys.time()
+  for(i in 1:length(algos)){i.t1 <- Sys.time()
+    i.algo <- algos[[i]]; n.algo <- names(algos)[i];
     for(j in 1:nreps){#reps of same algo
-      for(k in 1:max(envi.cv)){ #reps through clusters
+      for(k in 1:max(envi.cv)){#reps through clusters
         if(k==1){k.names <- names(envi2); k.stack <-NULL}
 
         k.test <- plyr::ldply(.data=k.names,
@@ -113,8 +113,8 @@ get_BestVars <- function(envi, pts){
       j.v4 <- data.frame('algo'=n.algo, 'score'=j.score, j.v3)
       j.data <- rbind(j.data, j.v4)
     }
-    # i.t2 <- Sys.time(); i.time <- i.t2-i.t1
-    # t.list[[i]] <- i.time
+    i.t2 <- Sys.time(); i.time <- i.t2-i.t1
+    t.list$time[which(t.list$algos==n.algo)] <- i.time
   }
 
   i.data <- plyr::ldply(.data=c(1:length(algos)), .fun=function(X){
