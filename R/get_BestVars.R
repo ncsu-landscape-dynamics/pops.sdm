@@ -24,9 +24,9 @@ get_BestVars <- function(envi, pts){
   # Maxent is approximately 2.5 to 3 times slower than the previous 7 algorithms mentioned
   # RF yields extremely high accuracy scores, may bias results, exchanged for CTA which is similar
   # Running all algorithms at once is approximately 25% faster than running them separately.
-  #algos <- list('SRE', 'CTA', 'FDA', 'GLM', 'GAM', 'MARS', 'MAXENT.Phillips', c('SRE', 'CTA', 'FDA', 'GLM', 'GAM', 'RF', 'MARS', 'MAXENT.Phillips'))
+  #algos <- list('SRE', 'CTA', 'FDA', 'GLM', 'GAM', 'MARS', 'MAXENT.Phillips', c('SRE', 'CTA', 'FDA', 'GLM', 'GAM', 'MARS', 'MAXENT.Phillips'))
   #names(algos) <- c('SRE', 'CTA', 'FDA', 'GLM', 'GAM',  'MARS', 'MAXENT.Phillips', 'ALL')
-  algos <- list(c('SRE', 'CTA', 'FDA', 'GLM', 'GAM', 'RF', 'MARS', 'MAXENT.Phillips'))
+  algos <- list(c('SRE', 'CTA', 'FDA', 'GLM', 'GAM', 'MARS', 'MAXENT.Phillips'))
   names(algos) <- c('ALL')
   evals <- c('ACCURACY', 'CSI', 'ETS', 'ROC', 'TSS') #Notes on evals; Kappa similar to tss, bias/far/sr/pod not very useful,
 

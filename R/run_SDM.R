@@ -12,7 +12,7 @@
 run_SDM <- function(spname, domain=world(), res=1){
   #### 1.0 Load Environmental data and species data ####
   #if(sources(domain)==sources(world())){
-  envi.1k <- pops.sdm::get_Envi1k(bio=T) #envi.cv <- envi.1k$clust
+  envi.1k <- pops.sdm::get_Envi1k(bio=T, elev=T, soil=T) #envi.cv <- envi.1k$clust
   envi <- terra::crop(x=envi.1k$rast, y=domain, mask=T)#; envi.1k$rast <- envi
   pts.1 <- pops.sdm::get_pts.1(spname=spname, domain=domain)
 
