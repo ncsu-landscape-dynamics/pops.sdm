@@ -82,16 +82,25 @@ run_SDM <- function(spname, domain=world(), res=1){
   myEnsemble <- biomod2::BIOMOD_EnsembleModeling(modeling.output = myModels,
                                                  chosen.models = 'all',
                                                  em.by = 'all', #'all' combines all algos and PA runs into a single ensemble.
-                                                 eval.metric = myEvals,
+                                                 eval.metric = 'TSS', #only mean.weight and committee averaging use this argument, leaving it as 'TSS' is faster
                                                  models.eval.meth = myEvals,
                                                  prob.mean = T,
                                                  prob.cv = T,
                                                  prob.ci = T, prob.ci.alpha = 0.05,
                                                  #prob.median = F, prob.mean.weight = T,
                                                  #prob.mean.weight.decay = 'proportional',
+                                                 committee.averaging = F)
+  myEnsembleCA <- biomod2::BIOMOD_EnsembleModeling(modeling.output = myModels,
+                                                 chosen.models = 'all',
+                                                 em.by = 'all', #'all' combines all algos and PA runs into a single ensemble.
+                                                 eval.metric = 'all',#   eval.metric = 'TSS',
+                                                 models.eval.meth = myEvals,
+                                                 prob.mean = F,
+                                                 prob.cv = F,
+                                                 prob.ci = F, #prob.ci.alpha = 0.05,
                                                  committee.averaging = T)
   myEvalEM <- biomod2::get_evaluations(myEnsemble) # get evaluation scores
-
+  myEvalCA <- biomod2::get_evaluations(myEnsembleCA)
 
   myProjEM <- biomod2::BIOMOD_EnsembleForecasting(EM.output = myEnsemble,
                                                   projection.output = myProj,
@@ -99,9 +108,15 @@ run_SDM <- function(spname, domain=world(), res=1){
                                                   binary.meth = myEvals,
                                                   compress = 'xz',
                                                   build.clamping.mask = F)
+  myProjCA <- biomod2::BIOMOD_EnsembleForecasting(EM.output = myEnsembleCA,
+                                                  projection.output = myProj,
+                                                  selected.models = 'all',
+                                                  binary.meth = myEvals,
+                                                  compress = 'xz',
+                                                  build.clamping.mask = F)
   EM.mean <- raster::mean(myProjEM@proj@val[[which(grepl('EMmean', names(myProjEM@proj@val)))]])
   EM.cv <- raster::mean(myProjEM@proj@val[[which(grepl('EMcv', names(myProjEM@proj@val)))]])
-  EM.ca <- raster::mean(myProjEM@proj@val[[which(grepl('EMca', names(myProjEM@proj@val)))]])
+  EM.ca <- raster::mean(myProjCA@proj@val[[which(grepl('EMca', names(myProjEM@proj@val)))]])
   EM.ciInf <- raster::mean(myProjEM@proj@val[[which(grepl('EMciInf', names(myProjEM@proj@val)))]])
   EM.ciSup <- raster::mean(myProjEM@proj@val[[which(grepl('EMciSup', names(myProjEM@proj@val)))]])
   p.out <- raster::stack(EM.mean, EM.cv, EM.ca, EM.ciInf, EM.ciSup)
