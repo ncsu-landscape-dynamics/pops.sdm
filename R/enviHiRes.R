@@ -37,7 +37,7 @@ soil.ph <-  terra::rast(paste(geodir, 'Global\\soils\\250m\\ph.mean.tif', sep=''
 # }
 
 ### population density
-if(pop=T){
+if(pop==T){
 popd <- terra::rast()
 }
 
