@@ -2,12 +2,12 @@ geodir <- 'Q:\\Shared drives\\Data\\Raster\\'
 
 
 ### climate 400m
-if(bio=T){
+if(bio==T){
 bioc.400 <- terra::rast(paste(geodir, 'Global\\BioClimComposite_1971_2000_400m.tif', sep=''))
 }
 
 #### soil 250m
-if(soil=T){
+if(soil==T){
 if(grepl('', list.files(paste(geodir, 'Global', sep='')))){
 soil.h20.1500 <- terra::rast(paste(geodir, 'Global\\soils\\250m\\1500kpa.mean.tif', sep=''))
 soil.h20.33 <- terra::rast(paste(geodir, 'Global\\soils\\250m\\33kpa.mean.tif', sep=''))
