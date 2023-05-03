@@ -3,12 +3,17 @@
 # require(parallel)
 #' @export
 
-get_Envi1k <- function(bio=F, elev=F, gdd=F, lc=F, pop=F, ptime=F, rnr=F, soil=F, tbase=5){
+get_Envi1k <- function(bio=F, elev=F, gdd=F, lc=F, pop=F, ptime=F, rnr=F, soil=F, tbase=5, res=1000){
 
   geodir <- 'Q:\\Shared drives\\Data\\Raster\\Global\\'
 
   if(bio==T){
-    biovar <- geodata::worldclim_global(var='bio', res=.5, path=geodir)
+    if(res<1000){
+      biovar <- terra::rast(paste(geodir, 'BioClimComposite_1971_2000_400m.tif', sep=''))
+      biovar <- biovar[[c(1:4,6:20)]]
+    }
+    if(res>=1000){biovar <- geodata::worldclim_global(var='bio', res=.5, path=geodir)}
+
     names(biovar) <- c('Mean.Annual.Temp', 'Mean.Diurnal.Range', 'Isothermality', 'Temp.Seasonality',
                        'Max.Temp.Warmest.Month', 'Min.Temp.Coldest.Month', 'Temp.Annual.Range',
                        'Mean.Temp.Wettest.Quarter', 'Mean.Temp.Driest.Quarter', 'Mean.Temp.Warmest.Quarter',
