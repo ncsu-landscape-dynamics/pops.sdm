@@ -1,3 +1,11 @@
+# require(geodata)
+# require(terra)
+# require(parallel)
+#' @export
+
+get_EnviHiRes <- function(bio=F, elev=F, gdd=F, lc=F, pop=F, ptime=F, rnr=F, soil=F, tbase=5){
+
+
 geodir <- 'Q:\\Shared drives\\Data\\Raster\\'
 
 
@@ -34,3 +42,4 @@ popd <- terra::rast()
 }
 
 #  elev1m <-
+}
