@@ -11,7 +11,7 @@ geodir <- 'Q:\\Shared drives\\Data\\Raster\\'
 
 ### climate 400m
 if(bio==T){
-bioc.400 <- terra::rast(paste(geodir, 'Global\\BioClimComposite_1971_2000_400m.tif', sep=''))
+biovar <- terra::rast(paste(geodir, 'Global\\BioClimComposite_1971_2000_400m.tif', sep=''))
 }
 
 #### soil 250m
