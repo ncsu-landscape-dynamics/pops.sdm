@@ -42,4 +42,20 @@ popd <- terra::rast()
 }
 
 #  elev1m <-
+
+if(bio==F){biovar <- NULL; biocl <- NULL}
+if(elev==F){elevvar <- NULL; elevcl <- NULL}
+if(gdd==F){gddvar <- NULL; gddcl <- NULL}
+if(lc==F){lcvar <- NULL; lccl <- NULL}
+if(pop==F){popvar <- NULL; popcl <- NULL}
+if(ptime==F){timevar <- NULL; timecl <- NULL}
+if(rnr==F){rnrvar <- NULL; rnrcl <- NULL}
+if(soil==F){solvar <- NULL; solcl <- NULL}
+
+envi <- terra::rast(terra::as.list(c(biovar, elevvar, gddvar, lcvar, popvar, timevar, rnrvar, solvar)))
+clst <- rbind(biocl, elevcl, gddcl, lccl, popcl, timecl, rnrcl, solcl)
+clst$cluster <- as.integer(as.factor(clst$cluster))
+cl2 <- clst$cluster; names(cl2) <- gsub(' ', '.', clst$var)
+return(list('rast'=envi, 'clust'=cl2))
+
 }
