@@ -8,11 +8,11 @@ get_Envi1k <- function(bio=F, elev=F, gdd=F, lc=F, pop=F, ptime=F, rnr=F, soil=F
   geodir <- 'Q:\\Shared drives\\Data\\Raster\\Global\\'
 
   if(bio==T){
-    if(res<1000){
+    if(res<800){
       biovar <- terra::rast(paste(geodir, 'BioClimComposite_1971_2000_400m.tif', sep=''))
       biovar <- biovar[[c(1:4,6:20)]]
     }
-    if(res>=1000){biovar <- geodata::worldclim_global(var='bio', res=.5, path=geodir)}
+    if(res>=800){biovar <- geodata::worldclim_global(var='bio', res=.5, path=geodir)}
 
     names(biovar) <- c('Mean.Annual.Temp', 'Mean.Diurnal.Range', 'Isothermality', 'Temp.Seasonality',
                        'Max.Temp.Warmest.Month', 'Min.Temp.Coldest.Month', 'Temp.Annual.Range',
@@ -68,29 +68,32 @@ get_Envi1k <- function(bio=F, elev=F, gdd=F, lc=F, pop=F, ptime=F, rnr=F, soil=F
 
   if(lc==T){
     lcpath <- paste(geodir, 'landcover\\', sep='')
-    if(dir.exists(lcpath)){
-      built <- terra::rast(paste(lcpath, 'built.tif', sep=''))
-      cropl <- terra::rast(paste(lcpath, 'cropl.tif', sep=''))
-      grass <- terra::rast(paste(lcpath, 'grass.tif', sep=''))
-      shrub <- terra::rast(paste(lcpath, 'shrub.tif', sep=''))
-      trees <- terra::rast(paste(lcpath, 'trees.tif', sep=''))
-      wetld <- terra::rast(paste(lcpath, 'wetld.tif', sep=''))
+    if(res>=800){
+      if(dir.exists(lcpath)){
+        built <- terra::rast(paste(lcpath, 'built.tif', sep=''))
+        cropl <- terra::rast(paste(lcpath, 'cropl.tif', sep=''))
+        grass <- terra::rast(paste(lcpath, 'grass.tif', sep=''))
+        shrub <- terra::rast(paste(lcpath, 'shrub.tif', sep=''))
+        trees <- terra::rast(paste(lcpath, 'trees.tif', sep=''))
+        wetld <- terra::rast(paste(lcpath, 'wetld.tif', sep=''))
+      }
+      if(!dir.exists(lcpath)){
+        globe <- geodata::worldclim_global(var='bio', res=.5, path=geodir); globext <- terra::ext(globe)
+        built <- terra::extend(x=geodata::landcover(var='built', path=geodir), y=globext)
+        cropl <- terra::extend(x=geodata::landcover(var="cropland", path=geodir), y=globext)
+        grass <- terra::extend(x=geodata::landcover(var='grassland', path=geodir), y=globext)
+        shrub <- terra::extend(x=geodata::landcover(var='shrubs', path=geodir), y=globext)
+        trees <- terra::extend(x=geodata::landcover(var='trees', path=geodir), y=globext)
+        wetld <- terra::extend(x=geodata::landcover(var='wetland', path=geodir), y=globext)
+        terra::writeRaster(built, filename=paste(lcpath, 'built.tif', sep=''))
+        terra::writeRaster(cropl, filename=paste(lcpath, 'cropl.tif', sep=''))
+        terra::writeRaster(grass, filename=paste(lcpath, 'grass.tif', sep=''))
+        terra::writeRaster(shrub, filename=paste(lcpath, 'shrub.tif', sep=''))
+        terra::writeRaster(trees, filename=paste(lcpath, 'trees.tif', sep=''))
+        terra::writeRaster(wetld, filename=paste(lcpath, 'wetld.tif', sep=''))
+      }
     }
-    if(!dir.exists(lcpath)){
-      globe <- geodata::worldclim_global(var='bio', res=.5, path=geodir); globext <- terra::ext(globe)
-      built <- terra::extend(x=geodata::landcover(var='built', path=geodir), y=globext)
-      cropl <- terra::extend(x=geodata::landcover(var="cropland", path=geodir), y=globext)
-      grass <- terra::extend(x=geodata::landcover(var='grassland', path=geodir), y=globext)
-      shrub <- terra::extend(x=geodata::landcover(var='shrubs', path=geodir), y=globext)
-      trees <- terra::extend(x=geodata::landcover(var='trees', path=geodir), y=globext)
-      wetld <- terra::extend(x=geodata::landcover(var='wetland', path=geodir), y=globext)
-      terra::writeRaster(built, filename=paste(lcpath, 'built.tif', sep=''))
-      terra::writeRaster(cropl, filename=paste(lcpath, 'cropl.tif', sep=''))
-      terra::writeRaster(grass, filename=paste(lcpath, 'grass.tif', sep=''))
-      terra::writeRaster(shrub, filename=paste(lcpath, 'shrub.tif', sep=''))
-      terra::writeRaster(trees, filename=paste(lcpath, 'trees.tif', sep=''))
-      terra::writeRaster(wetld, filename=paste(lcpath, 'wetld.tif', sep=''))
-    }
+
     lcvar <- c(built, cropl, grass, shrub, trees, wetld)
     lccl <- data.frame(var=names(lcvar), cluster='Landcover 1')
   }
@@ -124,15 +127,31 @@ get_Envi1k <- function(bio=F, elev=F, gdd=F, lc=F, pop=F, ptime=F, rnr=F, soil=F
   }
 
   if(soil==T){
-    soil.files <- c('Soil_pH_0cm.tif', 'Soil_pH_mean.tif', 'Soil_pH_200cm.tif',
-                    'Soil_h2o_33kpa_0cm.tif', 'Soil_h2o_33kpa_mean.tif',
-                    'Soil_h2o_33kpa_200cm.tif', 'Soil_h2o_1500kpa_0cm.tif',
-                    'Soil_h2o_1500kpa_mean.tif', 'Soil_h2o_1500kpa_200cm.tif')
-    solvar <- terra::rast(paste(geodir, '\\soils\\1km\\', soil.files, sep=''))
-    names(solvar) <- c('Soil.pH.0cm', 'Soil.pH.mean', 'Soil.pH.200cm',
-                       'Soil.h2o.33.0cm', 'Soil.h2o.33.mean', 'Soil.h2o.33.200cm',
-                       'Soil.h2o.1500.0cm', 'Soil.h2o.1500.mean', 'Soil.h2o.1500.200cm')
-    solcl <- data.frame(var=names(solvar), cluster='Soil 1')
+    if(res<800){
+      if(grepl('', list.files(geodir))){
+        soil.h20.1500 <- terra::rast(paste(geodir, 'Global\\soils\\250m\\1500kpa.mean.tif', sep=''))
+        soil.h20.33 <- terra::rast(paste(geodir, 'Global\\soils\\250m\\33kpa.mean.tif', sep=''))
+        soil.ph <-  terra::rast(paste(geodir, 'Global\\soils\\250m\\ph.mean.tif', sep=''))
+      }
+      # type <- c('ph.h2o', '1500kPa', '33kPa')
+      # i <- 1
+      # for(i in i:length(type)){
+      #   sl.list <- lapply(list.files(path='C:\\Users\\bjselige\\Desktop\\Soil_OpenLandMap\\', pattern=type[i], full.names=T), raster)
+      #   sl.mean <- terra::mean(sl.list[[1]], sl.list[[2]], sl.list[[3]], sl.list[[4]], sl.list[[5]], sl.list[[6]])
+      #   writeRaster(sl.mean, 'C:\\Users\\bjselige\\Desktop\\Soil_OpenLandMap\\33kPa.mean.tif')
+      # }
+    }
+    if(res>=800){
+      soil.files <- c('Soil_pH_0cm.tif', 'Soil_pH_mean.tif', 'Soil_pH_200cm.tif',
+                      'Soil_h2o_33kpa_0cm.tif', 'Soil_h2o_33kpa_mean.tif',
+                      'Soil_h2o_33kpa_200cm.tif', 'Soil_h2o_1500kpa_0cm.tif',
+                      'Soil_h2o_1500kpa_mean.tif', 'Soil_h2o_1500kpa_200cm.tif')
+      solvar <- terra::rast(paste(geodir, '\\soils\\1km\\', soil.files, sep=''))
+      names(solvar) <- c('Soil.pH.0cm', 'Soil.pH.mean', 'Soil.pH.200cm',
+                         'Soil.h2o.33.0cm', 'Soil.h2o.33.mean', 'Soil.h2o.33.200cm',
+                         'Soil.h2o.1500.0cm', 'Soil.h2o.1500.mean', 'Soil.h2o.1500.200cm')
+      solcl <- data.frame(var=names(solvar), cluster='Soil 1')
+    }
   }
 
   if(bio==F){biovar <- NULL; biocl <- NULL}
