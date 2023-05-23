@@ -5,13 +5,22 @@
 
 get_Envi1k <- function(bio=F, elev=F, gdd=F, lc=F, pop=F, ptime=F, rnr=F, soil=F, tbase=5, res=1000){
 
-  geodir <- 'Q:\\Shared drives\\Data\\Raster\\Global\\'
+  geodir <- 'Q:\\Shared drives\\Data\\Raster\\'
 
   if(bio==T){
     if(res<800){
-      biovar <- terra::rast(paste(geodir, 'BioClimComposite_1971_2000_400m.tif', sep=''))
+      biovar <- terra::rast(paste(geodir, 'USA\\BioClimComposite_1971_2000_400m.tif', sep=''))
       biovar <- biovar[[c(1:4,6:20)]]
+      if(res<400){
+        bio100 <- terra::rast(list.files(paste(geodir, 'USA\\', sep=''), 'bioclim.', full.names=T))
+        # for(i in i:nlyr(biovar)){print(i)
+        #   i.biovar <- terra::disagg(biovar[[i]], fact=(400/res), method='bilinear')
+        #   writeRaster(i.biovar, filename=paste(geodir, 'USA\\bioclim.', i, '_', res, 'm.tif', sep=''))
+        # }
+      }
+      if(res>400){biovar <- terra::aggregate(biovar, fact=(res/400), fun='mean')}
     }
+
     if(res>=800){biovar <- geodata::worldclim_global(var='bio', res=.5, path=geodir)}
 
     names(biovar) <- c('Mean.Annual.Temp', 'Mean.Diurnal.Range', 'Isothermality', 'Temp.Seasonality',
@@ -43,7 +52,10 @@ get_Envi1k <- function(bio=F, elev=F, gdd=F, lc=F, pop=F, ptime=F, rnr=F, soil=F
   }
 
   if(elev==T){
-    elevvar <- geodata::elevation_global(res=.5, path=geodir); names(elevvar) <- 'Elevation'
+    if(res>=800){
+      elevvar <- geodata::elevation_global(res=.5, path=geodir); names(elevvar) <- 'Elevation'
+    }
+    if(res<800){}
     elevcl <- data.frame(var=names(elevvar), cluster='Elevation 1')
   }
 
@@ -93,7 +105,7 @@ get_Envi1k <- function(bio=F, elev=F, gdd=F, lc=F, pop=F, ptime=F, rnr=F, soil=F
         terra::writeRaster(wetld, filename=paste(lcpath, 'wetld.tif', sep=''))
       }
     }
-
+    if(res<800){}
     lcvar <- c(built, cropl, grass, shrub, trees, wetld)
     lccl <- data.frame(var=names(lcvar), cluster='Landcover 1')
   }
