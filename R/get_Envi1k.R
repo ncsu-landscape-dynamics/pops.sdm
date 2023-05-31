@@ -53,7 +53,7 @@ get_Envi1k <- function(bio=F, elev=F, gdd=F, lc=F, pop=F, ptime=F, rnr=F, soil=F
 
   if(elev==T){
     if(res>=800){
-      elevvar <- geodata::elevation_global(res=.5, path=geodir); names(elevvar) <- 'Elevation'
+      elevvar <- geodata::elevation_global(res=.5, path=paste(geodir, 'Global\\',sep='')); names(elevvar) <- 'Elevation'
     }
  #   if(res<800){}
     elevcl <- data.frame(var=names(elevvar), cluster='Elevation 1')
@@ -62,10 +62,10 @@ get_Envi1k <- function(bio=F, elev=F, gdd=F, lc=F, pop=F, ptime=F, rnr=F, soil=F
   if(gdd==T){
     if(exists('tbase')==F){tbase <- 5}
     getGDD <- function(tbase){
-      gdpath <- paste(geodir, 'gdd.base', tbase, '.tif', sep='')
+      gdpath <- paste(paste(geodir, 'Global\\',sep=''), 'gdd.base', tbase, '.tif', sep='')
       if(file.exists(gdpath)){g1 <- terra::rast(gdpath)}
       if(!file.exists(gdpath)){print('Calculating GDD')
-        tavg <- geodata::worldclim_global(var='tavg', res=.5, path=geodir)
+        tavg <- geodata::worldclim_global(var='tavg', res=.5, path=paste(geodir, 'Global\\',sep=''))
         g1 <- terra::app(x=tavg, tbase, fun=function(x, tbase){
           days <- c(31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31)
           xbase <- x-tbase; xbase[which(xbase<0)] <- 0
@@ -79,8 +79,8 @@ get_Envi1k <- function(bio=F, elev=F, gdd=F, lc=F, pop=F, ptime=F, rnr=F, soil=F
   }
 
   if(lc==T){
-    lcpath <- paste(geodir, 'landcover\\', sep='')
     if(res>=800){
+      lcpath <- paste(geodir, '\\Global\\landcover\\', sep='')
       if(dir.exists(lcpath)){
         built <- terra::rast(paste(lcpath, 'built.tif', sep=''))
         cropl <- terra::rast(paste(lcpath, 'cropl.tif', sep=''))
@@ -111,17 +111,17 @@ get_Envi1k <- function(bio=F, elev=F, gdd=F, lc=F, pop=F, ptime=F, rnr=F, soil=F
   }
 
   if(pop==T){
-    popvar <- geodata::population(year='2020', res=.5, path=geodir)
+    popvar <- geodata::population(year='2020', res=.5, path=paste(geodir, 'Global\\',sep=''))
     names(popvar) <- 'Population'
     popcl <- data.frame(var=names(popvar), cluster='Population 1')
   }
 
   if(ptime==T){
     getPrecipTiming <- function(){
-      ptpath <- paste(geodir, '\\precip.timing.tif', sep='')
+      ptpath <- paste(geodir, 'Global\\precip.timing.tif', sep='')
       if(file.exists(ptpath)){prect <- terra::rast(ptpath)}
       if(!file.exists(ptpath)){print('Calculating Precip Timing (DJF-JJA)')
-        prec <- geodata::worldclim_global(var='prec', res=.5, path=geodir)
+        prec <- geodata::worldclim_global(var='prec', res=.5, path=paste(geodir, 'Global\\',sep=''))
         prect <- terra::app(x=prec, cores=parallel::detectCores()/2,
                             fun=function(x){return(sum(x[[12]], x[[1]], x[[2]])-sum(x[[6]], x[[7]], x[[8]]))})
         terra::writeRaster(prect, filename=ptpath); closeAllConnections()
@@ -133,7 +133,7 @@ get_Envi1k <- function(bio=F, elev=F, gdd=F, lc=F, pop=F, ptime=F, rnr=F, soil=F
   }
 
   if(rnr==T){
-    rnrvar <- terra::rast(list.files(geodir, '.dist.wrld', full.names = T))
+    rnrvar <- terra::rast(list.files(paste(geodir, 'Global\\',sep=''), '.dist.wrld', full.names = T))
     names(rnrvar) <- c('Road.Dist', 'Rail.Dist')
     rnrcl <- data.frame(var=names(rnrvar), cluster='Roads/Rails 1')
   }
@@ -158,7 +158,7 @@ get_Envi1k <- function(bio=F, elev=F, gdd=F, lc=F, pop=F, ptime=F, rnr=F, soil=F
                       'Soil_h2o_33kpa_0cm.tif', 'Soil_h2o_33kpa_mean.tif',
                       'Soil_h2o_33kpa_200cm.tif', 'Soil_h2o_1500kpa_0cm.tif',
                       'Soil_h2o_1500kpa_mean.tif', 'Soil_h2o_1500kpa_200cm.tif')
-      solvar <- terra::rast(paste(geodir, '\\soils\\1km\\', soil.files, sep=''))
+      solvar <- terra::rast(paste(geodir, 'Global\\soils\\1km\\', soil.files, sep=''))
       names(solvar) <- c('Soil.pH.0cm', 'Soil.pH.mean', 'Soil.pH.200cm',
                          'Soil.h2o.33.0cm', 'Soil.h2o.33.mean', 'Soil.h2o.33.200cm',
                          'Soil.h2o.1500.0cm', 'Soil.h2o.1500.mean', 'Soil.h2o.1500.200cm')
