@@ -21,7 +21,7 @@ get_Envi1k <- function(bio=F, elev=F, gdd=F, lc=F, pop=F, ptime=F, rnr=F, soil=F
       if(res>400){biovar <- terra::aggregate(biovar, fact=(res/400), fun='mean')}
     }
 
-    if(res>=800){biovar <- geodata::worldclim_global(var='bio', res=.5, path=geodir)}
+    if(res>=800){biovar <- geodata::worldclim_global(var='bio', res=.5, path=paste(geodir, 'Global\\',sep=''))}
 
     names(biovar) <- c('Mean.Annual.Temp', 'Mean.Diurnal.Range', 'Isothermality', 'Temp.Seasonality',
                        'Max.Temp.Warmest.Month', 'Min.Temp.Coldest.Month', 'Temp.Annual.Range',
@@ -55,7 +55,7 @@ get_Envi1k <- function(bio=F, elev=F, gdd=F, lc=F, pop=F, ptime=F, rnr=F, soil=F
     if(res>=800){
       elevvar <- geodata::elevation_global(res=.5, path=geodir); names(elevvar) <- 'Elevation'
     }
-    if(res<800){}
+ #   if(res<800){}
     elevcl <- data.frame(var=names(elevvar), cluster='Elevation 1')
   }
 
