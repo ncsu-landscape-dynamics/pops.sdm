@@ -55,7 +55,7 @@ get_Envi1k <- function(bio=F, elev=F, gdd=F, lc=F, pop=F, ptime=F, rnr=F, soil=F
     if(res>=800){
       elevvar <- geodata::elevation_global(res=.5, path=paste(geodir, 'Global\\',sep='')); names(elevvar) <- 'Elevation'
     }
- #   if(res<800){}
+    #   if(res<800){}
     elevcl <- data.frame(var=names(elevvar), cluster='Elevation 1')
   }
 
@@ -80,7 +80,7 @@ get_Envi1k <- function(bio=F, elev=F, gdd=F, lc=F, pop=F, ptime=F, rnr=F, soil=F
 
   if(lc==T){
     if(res>=800){
-      lcpath <- paste(geodir, '\\Global\\landcover\\', sep='')
+      lcpath <- paste(geodir, 'Global\\landcover\\', sep='')
       if(dir.exists(lcpath)){
         built <- terra::rast(paste(lcpath, 'built.tif', sep=''))
         cropl <- terra::rast(paste(lcpath, 'cropl.tif', sep=''))
@@ -103,15 +103,29 @@ get_Envi1k <- function(bio=F, elev=F, gdd=F, lc=F, pop=F, ptime=F, rnr=F, soil=F
         terra::writeRaster(shrub, filename=paste(lcpath, 'shrub.tif', sep=''))
         terra::writeRaster(trees, filename=paste(lcpath, 'trees.tif', sep=''))
         terra::writeRaster(wetld, filename=paste(lcpath, 'wetld.tif', sep=''))
+        lcvar <- c(built, cropl, grass, shrub, trees, wetld)
       }
     }
-    if(res<800){}
-    lcvar <- c(built, cropl, grass, shrub, trees, wetld)
+    if(res<800){
+      lcpath <- paste(geodir, 'USA\\landcover\\', sep='')
+      lc30 <- terra::rast(paste(lcpath, 'nlcd_2019_land_cover_l48_20210604.tif', sep=''))
+    }
     lccl <- data.frame(var=names(lcvar), cluster='Landcover 1')
   }
 
   if(pop==T){
-    popvar <- geodata::population(year='2020', res=.5, path=paste(geodir, 'Global\\',sep=''))
+    if(res>=800){popvar <- geodata::population(year='2020', res=.5, path=paste(geodir, 'Global\\',sep=''))}
+    if(res<800){
+      if(file.exists(paste(geodir, 'USA\\GHS_POP_E2020_USA_R2023A_4326_3ss_V1_0.tif', sep=''))){
+        popvar <- terra::rast(paste(geodir, 'USA\\GHS_POP_E2020_USA_R2023A_4326_3ss_V1_0.tif', sep=''))
+      }
+      if(!file.exists(paste(geodir, 'USA\\GHS_POP_E2020_USA_R2023A_4326_3ss_V1_0.tif', sep=''))){
+      popvar <- terra::rast(paste(geodir, 'Global\\pop\\GHS_POP_E2020_GLOBE_R2023A_4326_3ss_V1_0.tif', sep=''))
+      popvar.c <- terra::crop(popvar, terra::ext(pops.sdm::l48()))
+      popvar.m <- terra::crop(x=popvar.c, y=pops.sdm::l48(), mask=T); popvar <- popvar.m
+      terra::writeRaster(popvar, paste(geodir, 'USA\\GHS_POP_E2020_USA_R2023A_4326_3ss_V1_0.tif', sep=''))
+      }
+    }
     names(popvar) <- 'Population'
     popcl <- data.frame(var=names(popvar), cluster='Population 1')
   }
