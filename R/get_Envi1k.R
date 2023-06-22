@@ -12,13 +12,13 @@ get_Envi1k <- function(bio=F, elev=F, gdd=F, lc=F, pop=F, ptime=F, rnr=F, soil=F
     if(res<800){
       biovar <- terra::rast(paste(geodir, 'USA\\bioclim\\400m\\BioClimComposite_1971_2000_400m.tif', sep=''))
       if(res<400){biodir <- paste(geodir, 'USA\\bioclim\\', res, 'm\\', sep='')
-        if(!dir.exists(biodir)){dir.create(biodir)
-          for(i in i:nlyr(biovar)){print(i)
-            i.biovar <- terra::disagg(biovar[[i]], fact=(400/res), method='bilinear')
-            terra::writeRaster(i.biovar, filename=paste(biodir, 'bioclim.', i, '_', res, 'm.tif', sep=''))
-          }
+      if(!dir.exists(biodir)){dir.create(biodir)
+        for(i in i:nlyr(biovar)){print(i)
+          i.biovar <- terra::disagg(biovar[[i]], fact=(400/res), method='bilinear')
+          terra::writeRaster(i.biovar, filename=paste(biodir, 'bioclim.', i, '_', res, 'm.tif', sep=''))
         }
-        if(dir.exists(biodir)){biovar <- terra::rast(list.files(biodir, 'bioclim.', full.names=T))}
+      }
+      if(dir.exists(biodir)){biovar <- terra::rast(list.files(biodir, 'bioclim.', full.names=T))}
       }
       if(res>400){biovar <- terra::aggregate(biovar, fact=(res/400), fun='mean')}
     }
@@ -107,13 +107,22 @@ get_Envi1k <- function(bio=F, elev=F, gdd=F, lc=F, pop=F, ptime=F, rnr=F, soil=F
     }
     if(res<800){
       lcpath <- paste(geodir, 'USA\\landcover\\', sep='')
-      if(!file.exists(paste(geodir, 'USA\\landcover\\', 'nlcd_2019_land_cover_l48_20210604_proj.tif', sep=''))){
+      if(!file.exists(paste(lcpath, 'nlcd_2019_land_cover_l48_20210604_proj.tif', sep=''))){
         lc30 <- terra::rast(paste(lcpath, 'nlcd_2019_land_cover_l48_20210604.tif', sep=''))
         lc30.p <- terra::project(lc30, terra::crs(terra::rast(paste(geodir, 'USA\\BioClimComposite_1971_2000_400m.tif', sep=''))))
-        terra::writeRaster(lc30.p, paste(geodir, 'USA\\landcover\\', 'nlcd_2019_land_cover_l48_20210604_proj.tif', sep=''))
+        terra::writeRaster(lc30.p, paste(lcpath, 'nlcd_2019_land_cover_l48_20210604_proj.tif', sep=''))
       }
       if(file.exists(paste(geodir, 'USA\\landcover\\', 'nlcd_2019_land_cover_l48_20210604_proj.tif', sep=''))){
-        lcvar <- terra::rast(paste(geodir, 'USA\\landcover\\', 'nlcd_2019_land_cover_l48_20210604_proj.tif', sep=''))
+        lcvar <- terra::rast(paste(lcpath, 'nlcd_2019_land_cover_l48_20210604_proj.tif', sep=''))
+      }
+      if(res>30){
+        if(!file.exists(paste(lcpath, 'ncld_2019_', res, 'm.tif', sep=''))){
+          lcagg <- terra::aggregate(lcvar, fact=(res/30), fun='mean')
+          terra::writeRaster(lcagg, paste(lcpath, 'ncld_2019_', res, 'm.tif', sep=''))
+        }
+        if(file.exists(paste(lcpath, 'ncld_2019_', res, 'm.tif', sep=''))){
+          lcvar <- terra::rast(paste(lcpath, 'ncld_2019_', res, 'm.tif', sep=''))
+        }
       }
     }
     lccl <- data.frame(var=names(lcvar), cluster='Landcover 1')
