@@ -141,9 +141,26 @@ get_Envi1k <- function(bio=F, elev=F, gdd=F, lc=F, pop=F, ptime=F, rnr=F, soil=F
       if(file.exists(paste(geodir, 'USA\\GHS_POP_E2020_USA_R2023A_4326_3ss_V1_0.tif', sep=''))){
         popvar <- terra::rast(paste(geodir, 'USA\\GHS_POP_E2020_USA_R2023A_4326_3ss_V1_0.tif', sep=''))
       }
+      if(res>90){
+        if(!file.exists(paste(geodir, 'USA\\GHS_POP_E2020_USA_R2023A_4326_', res, 'm.tif', sep=''))){
+          popagg <- terra::aggregate(popvar, fact=(res/90), fun='mean')
+          terra::writeRaster(popagg, paste(geodir, 'USA\\GHS_POP_E2020_USA_R2023A_4326_', res, 'm.tif', sep=''))
+        }
+        if(file.exists(paste(geodir, 'USA\\GHS_POP_E2020_USA_R2023A_4326_', res, 'm.tif', sep=''))){
+          popvar <- terra::rast(paste(geodir, 'USA\\GHS_POP_E2020_USA_R2023A_4326_', res, 'm.tif', sep=''))
+        }
+      }
+      if(res<90){
+        if(!file.exists(paste(geodir, 'USA\\GHS_POP_E2020_USA_R2023A_4326_', res, 'm.tif', sep=''))){
+          popdis <- terra::disagg(popvar, fact=(90/res), method='bilinear')
+          terra::writeRaster(popdis, paste(geodir, 'USA\\GHS_POP_E2020_USA_R2023A_4326_', res, 'm.tif', sep=''))
+        }
+        if(file.exists(paste(geodir, 'USA\\GHS_POP_E2020_USA_R2023A_4326_', res, 'm.tif', sep=''))){
+          popvar <- terra::rast(paste(geodir, 'USA\\GHS_POP_E2020_USA_R2023A_4326_', res, 'm.tif', sep=''))
+        }
+      }
     }
-    names(popvar) <- 'Population'
-    popcl <- data.frame(var=names(popvar), cluster='Population 1')
+    names(popvar) <- 'Population'; popcl <- data.frame(var=names(popvar), cluster='Population 1')
   }
 
   if(ptime==T){
