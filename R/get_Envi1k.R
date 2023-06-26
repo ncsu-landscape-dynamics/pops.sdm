@@ -187,7 +187,7 @@ get_Envi1k <- function(bio=F, elev=F, gdd=F, lc=F, pop=F, ptime=F, rnr=F, soil=F
 
   if(soil==T){
     if(res<800){
-      if(any(grepl('.mean', list.files(paste(geodir, 'USA\\soils\\', sep=''))))==F){
+      if(any(grepl('.mean', list.files(paste(geodir, 'USA\\soils\\250m\\', sep=''))))==F){
         if(any(grepl('.mean', list.files(paste(geodir, 'Global\\soils\\250m\\', sep=''))))==F){
           type <- c('ph.h2o', '1500kPa', '33kPa')
           i <- 1
@@ -205,13 +205,35 @@ get_Envi1k <- function(bio=F, elev=F, gdd=F, lc=F, pop=F, ptime=F, rnr=F, soil=F
             sl.crop <- terra::crop(sl.mean, terra::ext(pops.sdm::l48()))
             sl.mask <- terra::crop(sl.crop, y=pops.sdm::l48(), mask=T)
             sl.proj <- terra::project(sl.mask, terra::rast(paste(geodir, 'USA\\BioClimComposite_1971_2000_400m.tif', sep='')))
-            writeRaster(sl.proj, paste(geodir, 'USA\\soils\\', file[i], '.tif', sep=''))
+            writeRaster(sl.proj, paste(geodir, 'USA\\soils\\250m\\', file[i], '.tif', sep=''))
           }
         }
       }
-      if(any(grepl('.mean', list.files(paste(geodir, 'USA\\soils\\', sep=''))))){
-        solvar <- lapply(list.files(paste(geodir, 'USA\\soils\\', sep=''), pattern='.mean.', full.names=T), terra::rast)
-        names()
+      if(any(grepl('.mean', list.files(paste(geodir, 'USA\\soils\\250m\\', sep=''))))){
+        solvar <- terra::rast(list.files(paste(geodir, 'USA\\soils\\250m\\', sep=''), pattern='.mean.', full.names=T))
+        names(solvar) <- c('1500kPa.mean', '33kPa.mean', 'ph.mean')
+      }
+
+      if(res<250){soldir <- paste(geodir, 'USA\\soils\\', res, 'm\\', sep='')
+      if(!dir.exists(soldir)){dir.create(soldir)
+        file <- c('ph.mean', '1500kPa.mean', '33kPa.mean')
+        for(i in i:nlyr(solvar)){print(i)
+          i.soldis <- terra::disagg(solvar[[i]], fact=(250/res), method='bilinear')
+          terra::writeRaster(i.soldis, filename=paste(soldir, file[[i]], '_', res, 'm.tif', sep=''))
+        }
+      }
+      if(dir.exists(soldir)){solvar <- terra::rast(list.files(soldir, 'soil.', full.names=T))}
+      }
+
+      if(res>250){soldir <- paste(geodir, 'USA\\soils\\', res, 'm\\', sep='')
+        if(!dir.exists(soldir)){dir.create(soldir)
+          file <- c('ph.mean', '1500kPa.mean', '33kPa.mean')
+          for(i in i:nlyr(solvar)){
+            i.solagg <- terra::aggregate(solvar[[i]], fact=(res/250), fun='mean')
+            terra::writeRaster(i.solagg, filename=paste(soldir, file[[i]], '_', res, 'm.tif', sep=''))
+          }
+        }
+        if(dir.exists(soldir)){solvar <- terra::rast(list.files(soldir, 'soil.', full.names=T))}
       }
     }
     if(res>=800){
