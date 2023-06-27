@@ -11,6 +11,7 @@ get_Envi1k <- function(bio=F, elev=F, gdd=F, lc=F, pop=F, ptime=F, rnr=F, soil=F
     if(res>=800){biovar <- geodata::worldclim_global(var='bio', res=.5, path=paste(geodir, 'Global\\',sep=''))}
     if(res<800){
       biovar <- terra::rast(paste(geodir, 'USA\\bioclim\\400m\\BioClimComposite_1971_2000_400m.tif', sep=''))
+      biovar <- biovar[[c(1:4, 6:20)]]
       if(res<400){biodir <- paste(geodir, 'USA\\bioclim\\', res, 'm\\', sep='')
       if(!dir.exists(biodir)){dir.create(biodir)
         for(i in i:nlyr(biovar)){print(i)
@@ -18,7 +19,13 @@ get_Envi1k <- function(bio=F, elev=F, gdd=F, lc=F, pop=F, ptime=F, rnr=F, soil=F
           terra::writeRaster(i.biovar, filename=paste(biodir, 'bioclim.', i, '_', res, 'm.tif', sep=''))
         }
       }
-      if(dir.exists(biodir)){biovar <- terra::rast(list.files(biodir, 'bioclim.', full.names=T))}
+      if(dir.exists(biodir)){
+        bio.list <- list(); i <- 1
+        for(i in i:nlyr(biovar)){
+          bio.list[[i]] <- terra::rast(paste(biodir, 'bioclim.', i, '_', res, 'm.tif', sep=''))
+        }
+        biovar <- terra::rast(bio.list)
+      }
       }
       if(res>400){biovar <- terra::aggregate(biovar, fact=(res/400), fun='mean')}
     }
@@ -216,14 +223,17 @@ get_Envi1k <- function(bio=F, elev=F, gdd=F, lc=F, pop=F, ptime=F, rnr=F, soil=F
 
       if(res<250){
         soldir <- paste(geodir, 'USA\\soils\\', res, 'm\\', sep='')
-        if(!dir.exists(soldir)){dir.create(soldir)
-          i <- 1
-          for(i in i:nlyr(solvar)){print(i)
-            i.soldis <- terra::disagg(solvar[[i]], fact=(250/res), method='bilinear')
-            terra::writeRaster(i.soldis, filename=paste(soldir, names(solvar)[[i]], '_', res, 'm.tif', sep=''))
+        if(!dir.exists(soldir)){dir.create(soldir)}
+        if(dir.exists(soldir)){
+          if(length(list.files(soldir))<3){
+            i <- 1
+            for(i in i:nlyr(solvar)){print(i)
+              i.soldis <- terra::disagg(solvar[[i]], fact=(250/res), method='bilinear')
+              terra::writeRaster(i.soldis, filename=paste(soldir, names(solvar)[[i]], '_', res, 'm.tif', sep=''))
+            }
           }
+          if(!length(list.files(soldir))<3){solvar <- terra::rast(list.files(soldir, full.names=T))}
         }
-        if(dir.exists(soldir)){solvar <- terra::rast(list.files(soldir, 'soil.', full.names=T))}
       }
 
       if(res>250){
