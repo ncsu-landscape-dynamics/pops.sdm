@@ -271,6 +271,9 @@ get_Envi1k <- function(bio=F, elev=F, gdd=F, lc=F, pop=F, ptime=F, rnr=F, soil=F
         }
         if(dir.exists(soldir)){solvar <- terra::rast(list.files(soldir, 'soil.', full.names=T))}
       }
+
+       names(solvar) <- c('1500kPa.mean', '33kPa.mean', 'ph.mean')
+
     }
     if(res>=1000){
       soil.files <- c('Soil_pH_0cm.tif', 'Soil_pH_mean.tif', 'Soil_pH_200cm.tif',
@@ -281,8 +284,8 @@ get_Envi1k <- function(bio=F, elev=F, gdd=F, lc=F, pop=F, ptime=F, rnr=F, soil=F
       names(solvar) <- c('Soil.pH.0cm', 'Soil.pH.mean', 'Soil.pH.200cm',
                          'Soil.h2o.33.0cm', 'Soil.h2o.33.mean', 'Soil.h2o.33.200cm',
                          'Soil.h2o.1500.0cm', 'Soil.h2o.1500.mean', 'Soil.h2o.1500.200cm')
-      solcl <- data.frame(var=names(solvar), cluster='Soil 1')
     }
+      solcl <- data.frame(var=names(solvar), cluster='Soil 1')
   }
 
   if(bio==F){biovar <- NULL; biocl <- NULL}
