@@ -80,7 +80,7 @@ get_Envi1k <- function(bio=F, elev=F, gdd=F, lc=F, pop=F, ptime=F, rnr=F, soil=F
     if(exists('tbase')==F){tbase <- 5}
     getGDD <- function(tbase){
       if(res==1000){gdpath <- paste(paste(geodir, 'Global\\',sep=''), 'gdd.base', tbase, '.tif', sep='')}
-      if(res<1000){ptpath <- paste(geodir, 'USA\\gdd_base',tbase, '_', res, 'm.tif', sep='')}
+      if(res<1000){gdpath <- paste(geodir, 'USA\\gdd_base',tbase, '_', res, 'm.tif', sep='')}
       if(file.exists(gdpath)){g1 <- terra::rast(gdpath)}
       if(!file.exists(gdpath)){print('Calculating GDD')
         tavg <- geodata::worldclim_global(var='tavg', res=.5, path=paste(geodir, 'Global\\',sep=''))
