@@ -243,7 +243,7 @@ get_Envi1k <- function(bio=F, elev=F, gdd=F, lc=F, pop=F, ptime=F, rnr=F, soil=F
       }
       if(any(grepl('.mean', list.files(paste(geodir, 'USA\\soils\\250m\\', sep=''))))){
         solvar <- terra::rast(list.files(paste(geodir, 'USA\\soils\\250m\\', sep=''), pattern='.mean.', full.names=T))
-        names(solvar) <- c('1500kPa.mean', '33kPa.mean', 'ph.mean')
+        names(solvar) <- c('soil.1500kPa.mean', 'soil.33kPa.mean', 'soil.ph.mean')
       }
 
       if(res<250){
@@ -272,7 +272,7 @@ get_Envi1k <- function(bio=F, elev=F, gdd=F, lc=F, pop=F, ptime=F, rnr=F, soil=F
         if(dir.exists(soldir)){solvar <- terra::rast(list.files(soldir, 'soil.', full.names=T))}
       }
 
-       names(solvar) <- c('1500kPa.mean', '33kPa.mean', 'ph.mean')
+       names(solvar) <- c('soil.1500kPa.mean', 'soil.33kPa.mean', 'soil.ph.mean')
 
     }
     if(res>=1000){
