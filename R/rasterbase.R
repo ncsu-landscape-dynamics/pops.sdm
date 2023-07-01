@@ -1,3 +1,5 @@
+#' @export
+
 rasterbase <- function(res){
   geodir <- 'Q:\\Shared drives\\Data\\Raster\\'
   if(res==1000){
