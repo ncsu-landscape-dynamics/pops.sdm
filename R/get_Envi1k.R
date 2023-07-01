@@ -6,6 +6,7 @@
 get_Envi1k <- function(bio=F, elev=F, gdd=F, lc=F, pop=F, ptime=F, rnr=F, soil=F, tbase=5, res=1000){
 
   geodir <- 'Q:\\Shared drives\\Data\\Raster\\'
+  base.rast <- pops.sdm::rasterbase(res=res)
 
   if(bio==T){
     if(res>=1000){biovar <- geodata::worldclim_global(var='bio', res=.5, path=paste(geodir, 'Global\\',sep=''))}
@@ -13,9 +14,7 @@ get_Envi1k <- function(bio=F, elev=F, gdd=F, lc=F, pop=F, ptime=F, rnr=F, soil=F
       if(!file.exists(paste(geodir, 'USA\\bioclim\\500m\\BioClimComposite_1971_2000_15s.tif', sep=''))){
         bio <- terra::rast('Q:\\Shared drives\\Data\\Original\\BioClimComposite_1971_2000_400m.tif')
         bio <- bio[[c(1:4, 6:20)]]
-        bio.p <- terra::project(bio, "epsg:4326", threads=T)
-        bio.c <- terra::crop(bio.p, terra::ext(pops.sdm::l48()))
-        bio.m <- terra::crop(bio.c, y=pops.sdm::l48(), mask=T)
+        bio.p <- terra::project(bio, base.rast, threads=T)
         terra::writeRaster(bio.m, filename=paste(geodir, 'USA\\bioclim\\500m\\BioClimComposite_1971_2000_15s.tif', sep=''))
       }
       if(file.exists(paste(geodir, 'USA\\bioclim\\500m\\BioClimComposite_1971_2000_15s.tif', sep=''))){
@@ -26,7 +25,6 @@ get_Envi1k <- function(bio=F, elev=F, gdd=F, lc=F, pop=F, ptime=F, rnr=F, soil=F
       if(dir.exists(biodir)){
         if(length(list.files(biodir))<19){i <- 1
         for(i in i:terra::nlyr(biovar)){print(i)
-          if(res==100){base.rast <- terra::rast('Q:\\Shared drives\\Data\\Raster\\USA\\base_3s.tif')}
           i.biovar <- terra::project(biovar[[i]], base.rast, threads=T)
           terra::writeRaster(i.biovar, filename=paste(biodir, 'bioclim.', i, '_', res, 'm.tif', sep=''))
         }
@@ -85,10 +83,6 @@ get_Envi1k <- function(bio=F, elev=F, gdd=F, lc=F, pop=F, ptime=F, rnr=F, soil=F
       if(!file.exists(gdpath)){print('Calculating GDD')
         tavg <- geodata::worldclim_global(var='tavg', res=.5, path=paste(geodir, 'Global\\',sep=''))
         if(res<1000){
-          if(res==500){}
-          if(res==250){}
-          if(res==100){base.rast <- terra::rast('Q:\\Shared drives\\Data\\Raster\\USA\\base_3s.tif')}
-          if(res==30){}
           tavg <- terra::project(tavg, base.rast, threads=T)
         }
         g1 <- terra::app(x=tavg, tbase, fun=function(x, tbase){
@@ -136,8 +130,8 @@ get_Envi1k <- function(bio=F, elev=F, gdd=F, lc=F, pop=F, ptime=F, rnr=F, soil=F
       if(!file.exists(paste(lcpath, 'nlcd_2019_land_cover_l48_20210604_proj.tif', sep=''))){
         lc30 <- terra::rast(paste(lcpath, 'nlcd_2019_land_cover_l48_20210604.tif', sep=''))
         lc30.p <- terra::project(lc30, "epsg:4326", method='near', threads=T)
-        lc30.c <- terra::crop(lc30.p, )
-        lc30.m <- terra::crop(lc30.m, )
+        lc30.c <- terra::crop(lc30.p, terra::ext(pops.sdm::l48()))
+        lc30.m <- terra::crop(lc30.m, y=pops.sdm::l48(), mask=T)
         terra::writeRaster(lc30.m, paste(lcpath, 'nlcd_2019_land_cover_l48_20210604_proj.tif', sep=''))
       }
       if(file.exists(paste(geodir, 'USA\\landcover\\', 'nlcd_2019_land_cover_l48_20210604_proj.tif', sep=''))){
@@ -170,7 +164,7 @@ get_Envi1k <- function(bio=F, elev=F, gdd=F, lc=F, pop=F, ptime=F, rnr=F, soil=F
       }
       if(res>100){
         if(!file.exists(paste(geodir, 'USA\\GHS_POP_E2020_USA_R2023A_4326_', res, 'm.tif', sep=''))){
-          popagg <- terra::aggregate(popvar, fact=(res/100), fun='mean')
+          popagg <- terra::project(popvar, base.rast, threads=T) #popagg <- terra::aggregate(popvar, fact=(res/100), fun='mean')
           terra::writeRaster(popagg, paste(geodir, 'USA\\GHS_POP_E2020_USA_R2023A_4326_', res, 'm.tif', sep=''))
         }
         if(file.exists(paste(geodir, 'USA\\GHS_POP_E2020_USA_R2023A_4326_', res, 'm.tif', sep=''))){
@@ -179,7 +173,7 @@ get_Envi1k <- function(bio=F, elev=F, gdd=F, lc=F, pop=F, ptime=F, rnr=F, soil=F
       }
       if(res<100){
         if(!file.exists(paste(geodir, 'USA\\GHS_POP_E2020_USA_R2023A_4326_', res, 'm.tif', sep=''))){
-          popdis <- terra::disagg(popvar, fact=(100/res), method='bilinear')
+          popdis <- terra::project(popvar, base.rast, threads=T)
           terra::writeRaster(popdis, paste(geodir, 'USA\\GHS_POP_E2020_USA_R2023A_4326_', res, 'm.tif', sep=''))
         }
         if(file.exists(paste(geodir, 'USA\\GHS_POP_E2020_USA_R2023A_4326_', res, 'm.tif', sep=''))){
@@ -198,10 +192,6 @@ get_Envi1k <- function(bio=F, elev=F, gdd=F, lc=F, pop=F, ptime=F, rnr=F, soil=F
       if(!file.exists(ptpath)){print('Calculating Precip Timing (DJF-JJA)')
         prec <- geodata::worldclim_global(var='prec', res=.5, path=paste(geodir, 'Global\\',sep=''))
         if(res<1000){
-          if(res==500){}
-          if(res==250){}
-          if(res==100){base.rast <- terra::rast('Q:\\Shared drives\\Data\\Raster\\USA\\base_3s.tif')}
-          if(res==30){}
           prec <- terra::project(prec, base.rast, threads=T)
         }
         prect <- terra::app(x=prec, cores=parallel::detectCores()/2,
@@ -251,7 +241,6 @@ get_Envi1k <- function(bio=F, elev=F, gdd=F, lc=F, pop=F, ptime=F, rnr=F, soil=F
         if(!dir.exists(soldir)){dir.create(soldir)}
         if(dir.exists(soldir)){
           if(length(list.files(soldir))<3){i <- 1
-          if(res==100){base.rast <- terra::rast('Q:\\Shared drives\\Data\\Raster\\USA\\base_3s.tif')}
           for(i in i:terra::nlyr(solvar)){print(i)
             i.sol <- terra::project(solvar[[i]], base.rast, threads=T)
             terra::writeRaster(i.sol, filename=paste(soldir, names(solvar)[[i]], '_', res, 'm.tif', sep=''))
@@ -272,7 +261,7 @@ get_Envi1k <- function(bio=F, elev=F, gdd=F, lc=F, pop=F, ptime=F, rnr=F, soil=F
         if(dir.exists(soldir)){solvar <- terra::rast(list.files(soldir, 'soil.', full.names=T))}
       }
 
-       names(solvar) <- c('soil.1500kPa.mean', 'soil.33kPa.mean', 'soil.ph.mean')
+      names(solvar) <- c('soil.1500kPa.mean', 'soil.33kPa.mean', 'soil.ph.mean')
 
     }
     if(res>=1000){
@@ -285,7 +274,7 @@ get_Envi1k <- function(bio=F, elev=F, gdd=F, lc=F, pop=F, ptime=F, rnr=F, soil=F
                          'Soil.h2o.33.0cm', 'Soil.h2o.33.mean', 'Soil.h2o.33.200cm',
                          'Soil.h2o.1500.0cm', 'Soil.h2o.1500.mean', 'Soil.h2o.1500.200cm')
     }
-      solcl <- data.frame(var=names(solvar), cluster='Soil 1')
+    solcl <- data.frame(var=names(solvar), cluster='Soil 1')
   }
 
   if(bio==F){biovar <- NULL; biocl <- NULL}
