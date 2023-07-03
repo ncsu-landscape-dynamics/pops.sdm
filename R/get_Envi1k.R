@@ -88,7 +88,7 @@ get_Envi1k <- function(bio=F, elev=F, gdd=F, lc=F, pop=F, ptime=F, rnr=F, soil=F
         g1 <- terra::app(x=tavg, tbase, fun=function(x, tbase){
           days <- c(31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31)
           xbase <- x-tbase; xbase[which(xbase<0)] <- 0
-          return(sum(xbase*days))}, cores=detectCores()/2)
+          return(sum(xbase*days))}, cores=parallel::detectCores()/2)
         terra::writeRaster(g1, filename=gdpath); closeAllConnections()
       }
       names(g1) <- paste('GDD ', tbase, sep=''); return(g1)
