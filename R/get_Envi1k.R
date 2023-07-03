@@ -78,20 +78,20 @@ get_Envi1k <- function(bio=F, elev=F, gdd=F, lc=F, pop=F, ptime=F, rnr=F, soil=F
     if(exists('tbase')==F){tbase <- 5}
     getGDD <- function(tbase){
       if(res==1000){gdpath <- paste(paste(geodir, 'Global\\',sep=''), 'gdd.base', tbase, '.tif', sep='')}
-      if(res<1000){gdpath <- paste(geodir, 'USA\\gdd_base',tbase, '_', res, 'm.tif', sep='')}
-      if(file.exists(gdpath)){g1 <- terra::rast(gdpath)}
       if(!file.exists(gdpath)){print('Calculating GDD')
         tavg <- geodata::worldclim_global(var='tavg', res=.5, path=paste(geodir, 'Global\\',sep=''))
-
         g1 <- terra::app(x=tavg, tbase=tbase, fun=function(x, tbase){
           days <- c(31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31)
           xbase <- x-tbase; xbase[which(xbase<0)] <- 0; xbase <- sum(xbase*days)
           return(xbase)}, cores=parallel::detectCores()/2); closeAllConnections()
 
-        if(res<1000){
-          g1 <- terra::project(g1, base.rast, threads=T)
-        }
+        terra::writeRaster(g1, filename=gdpath)
+      }
+      if(file.exists(gdpath)){g1 <- terra::rast(gdpath)}
 
+      if(res<1000){
+        gdpath <- paste(geodir, 'USA\\gdd_base',tbase, '_', res, 'm.tif', sep='')
+        g1 <- terra::project(g1, base.rast, threads=T)
         terra::writeRaster(g1, filename=gdpath)
       }
       names(g1) <- paste('GDD ', tbase, sep=''); return(g1)
