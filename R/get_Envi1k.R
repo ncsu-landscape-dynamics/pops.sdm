@@ -68,7 +68,8 @@ get_Envi1k <- function(bio=F, elev=F, gdd=F, lc=F, pop=F, ptime=F, rnr=F, soil=F
 
   if(elev==T){
     if(res>=1000){
-      elevvar <- geodata::elevation_global(res=.5, path=paste(geodir, 'Global\\',sep='')); names(elevvar) <- 'Elevation'
+      elevvar <- geodata::elevation_global(res=.5, path=paste(geodir, 'Global\\',sep=''))
+      names(elevvar) <- 'Elevation'
     }
     #   if(res<1000){}
     elevcl <- data.frame(var=names(elevvar), cluster='Elevation 1')
@@ -91,8 +92,11 @@ get_Envi1k <- function(bio=F, elev=F, gdd=F, lc=F, pop=F, ptime=F, rnr=F, soil=F
 
       if(res<1000){
         gdpath <- paste(geodir, 'USA\\gdd_base',tbase, '_', res, 'm.tif', sep='')
-        g1 <- terra::project(g1, base.rast, threads=T)
-        terra::writeRaster(g1, filename=gdpath)
+        if(!file.exists(gdpath)){
+          g1 <- terra::project(g1, base.rast, threads=T)
+          terra::writeRaster(g1, filename=gdpath)
+        }
+        if(file.exists(gdpath)){g1 <- terra::rast(gdpath)}
       }
       names(g1) <- paste('GDD ', tbase, sep=''); return(g1)
     }
