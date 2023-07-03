@@ -12,7 +12,8 @@
 run_SDM <- function(spname, domain=world(), res=1){
   #### 1.0 Load Environmental data and species data ####
   #if(sources(domain)==sources(world())){
-  envi.1k <- pops.sdm::get_Envi1k(bio=T, elev=T, soil=T) #envi.cv <- envi.1k$clust
+  envi.1k <- pops.sdm::get_Envi1k(bio=T, elev=F, soil=F, lc=F, ptime=F, gdd=T, rnr=T, tbase=5) #envi.cv <- envi.1k$clust
+  envi.1k <- pops.sdm::get_Envi1k(bio=T, ptime=T, soil=T, pop=T, res=100)
   envi <- terra::crop(x=envi.1k$rast, y=domain, mask=T)#; envi.1k$rast <- envi
   pts.1 <- pops.sdm::get_pts.1(spname=spname, domain=domain)
 
@@ -57,7 +58,7 @@ run_SDM <- function(spname, domain=world(), res=1){
                                        modeling.id = paste(myName,"AllModels",sep=""),
                                        models = myAlgos,
                                        models.options = myOptions,
-                                       NbRunEval = 2, #3, #number of runs
+                                       NbRunEval = 1, #3, #number of runs
                                        DataSplit = 80,
                                        models.eval.meth = myEvals,
                                        VarImport = 1,
@@ -90,6 +91,7 @@ run_SDM <- function(spname, domain=world(), res=1){
                                                  #prob.median = F, prob.mean.weight = T,
                                                  #prob.mean.weight.decay = 'proportional',
                                                  committee.averaging = F)
+
   myEnsembleCA <- biomod2::BIOMOD_EnsembleModeling(modeling.output = myModels,
                                                  chosen.models = 'all',
                                                  em.by = 'all', #'all' combines all algos and PA runs into a single ensemble.
@@ -114,11 +116,12 @@ run_SDM <- function(spname, domain=world(), res=1){
                                                   build.clamping.mask = F)
   EM.mean <- raster::mean(myProjEM@proj@val[[which(grepl('EMmean', names(myProjEM@proj@val)))]])
   EM.cv <- raster::mean(myProjEM@proj@val[[which(grepl('EMcv', names(myProjEM@proj@val)))]])
-  EM.ca <- raster::mean(myProjCA@proj@val[[which(grepl('EMca', names(myProjEM@proj@val)))]])
+  EM.sd <- (EM.cv*EM.mean)/100 #EM.sd <- raster::calc(x=myProj@proj@val, fun=sd, na.rm=T)
   EM.ciInf <- raster::mean(myProjEM@proj@val[[which(grepl('EMciInf', names(myProjEM@proj@val)))]])
   EM.ciSup <- raster::mean(myProjEM@proj@val[[which(grepl('EMciSup', names(myProjEM@proj@val)))]])
-  p.out <- raster::stack(EM.mean, EM.cv, EM.ca, EM.ciInf, EM.ciSup)
-  names(p.out) <- c('mean', 'cv', 'ca', 'ciInf', 'ciSup')
+  EM.ca <- raster::mean(myProjCA@proj@val)
+  p.out <- raster::stack(EM.mean, EM.cv, EM.sd, EM.ca, EM.ciInf, EM.ciSup)
+  names(p.out) <- c('mean', 'cv', 'sd', 'ca', 'ciInf', 'ciSup')
   #p.out <- mean(terra::unwrap(myProjEM@proj.out@val))
 
 
@@ -137,14 +140,14 @@ run_SDM <- function(spname, domain=world(), res=1){
 
   ##### 5. Thresholding
   p2 <- p.out$mean
-  p2.min <- min(values(p2),na.rm=T); p2.max <- max(values(p2),na.rm=T)
+  p2.min <- min(terra::values(p2),na.rm=T); p2.max <- max(terra::values(p2),na.rm=T)
   trs <- seq(p2.min, p2.max, by=((p2.max-p2.min)/100))
 
   trs.metrics <- plyr::ldply(.data=c(1:length(trs)),
                              .fun=function(X){
                                p2.tr <- p2>trs[X]
                                x.zero <- sum(raster::extract(x=p2.tr, y=as(pts.1, 'Spatial'))==0, na.rm=T)/length(pts.1)
-                               x.area <- sum(values(p2.tr), na.rm=T)/length(na.omit(p2[]))
+                               x.area <- sum(terra::values(p2.tr), na.rm=T)/length(na.omit(p2[]))
                                x.score <- 1 - x.zero - x.area
                                df.out <- data.frame('trs'=trs[X], 'zero'=x.zero, 'area'=x.area, 'score'=x.score, row.names=trs[X])
                                return(df.out)}, .progress = 'text')

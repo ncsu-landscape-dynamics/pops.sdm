@@ -127,19 +127,27 @@ get_Envi1k <- function(bio=F, elev=F, gdd=F, lc=F, pop=F, ptime=F, rnr=F, soil=F
     }
     if(res<1000){
       lcpath <- paste(geodir, 'USA\\landcover\\', sep='')
-      if(!file.exists(paste(lcpath, 'nlcd_2019_land_cover_l48_20210604_proj.tif', sep=''))){
+      if(!file.exists(paste(lcpath, 'nlcd_2019_land_cover_l48_20210604_1s.tif', sep=''))){
         lc30 <- terra::rast(paste(lcpath, 'nlcd_2019_land_cover_l48_20210604.tif', sep=''))
-        lc30.p <- terra::project(lc30, "epsg:4326", method='near', threads=T)
-        lc30.c <- terra::crop(lc30.p, terra::ext(pops.sdm::l48()))
-        lc30.m <- terra::crop(lc30.m, y=pops.sdm::l48(), mask=T)
-        terra::writeRaster(lc30.m, paste(lcpath, 'nlcd_2019_land_cover_l48_20210604_proj.tif', sep=''))
+        lcbase <- rasterbase(res=33)
+        lc1s <- terra::project(lc30, lcbase, method='near', threads=T)
+        # lc30.p <- terra::project(lc30, "epsg:4326", method='near', threads=T)
+        # lc30.c <- terra::crop(lc30.p, terra::ext(pops.sdm::l48()))
+        # lc30.m <- terra::crop(lc30.m, y=pops.sdm::l48(), mask=T)
+        terra::writeRaster(lc1s, paste(lcpath, 'nlcd_2019_land_cover_l48_20210604_1s.tif', sep=''))
       }
-      if(file.exists(paste(geodir, 'USA\\landcover\\', 'nlcd_2019_land_cover_l48_20210604_proj.tif', sep=''))){
-        lcvar <- terra::rast(paste(lcpath, 'nlcd_2019_land_cover_l48_20210604_proj.tif', sep=''))
+      if(file.exists(paste(geodir, 'USA\\landcover\\', 'nlcd_2019_land_cover_l48_20210604_1s.tif', sep=''))){
+        lcvar <- terra::rast(paste(lcpath, 'nlcd_2019_land_cover_l48_20210604_1s.tif', sep=''))
       }
-      if(res>30){
+      if(res>33){
         if(!file.exists(paste(lcpath, 'ncld_2019_', res, 'm.tif', sep=''))){
-          lcagg <- terra::aggregate(lcvar, fact=(res/30), fun='modal')
+          if(res==250){
+            lcagg <- terra::aggregate(lcvar, fact=7, fun='modal')
+            lcagg <- terra::project(lcagg, base.rast, method='near', threads=T)
+          }
+          if(res!=250){
+            lcagg <- terra::aggregate(lcvar, fact=(res/(100/3)), fun='modal')
+          }
           terra::writeRaster(lcagg, paste(lcpath, 'ncld_2019_', res, 'm.tif', sep=''))
         }
         if(file.exists(paste(lcpath, 'ncld_2019_', res, 'm.tif', sep=''))){
