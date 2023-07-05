@@ -195,7 +195,7 @@ get_Envi1k <- function(bio=F, elev=F, gdd=F, lc=F, pop=F, ptime=F, rnr=F, soil=F
         }
       }
     }
-    names(popvar) <- 'Population'; popcl <- data.frame(var=names(popvar), cluster='Population 1')
+    names(popvar) <- 'Population'; popcl <- data.frame(var=names(popvar), cluster='Landcover 1')
   }
 
   if(ptime==T){
