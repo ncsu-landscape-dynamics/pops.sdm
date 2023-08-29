@@ -23,7 +23,9 @@ rasterbase <- function(res){
           base.rast <- terra::crop(base.rast, y=pops.sdm::l48(), mask=T)
         }
         if(res==250){
-          base.rast <- terra::rast()
+          base.rast <- terra::rast("Q:\\Shared drives\\Data\\Raster\\USA\\soils\\250m\\ph.mean.tif")
+          base.rast <- terra::crop(base.rast, terra::ext(pops.sdm::l48()))
+          base.rast <- terra::crop(base.rast, y=pops.sdm::l48(), mask=T)
         }
         if(res==100){
           base.rast <- terra::rast(paste(geodir, 'Global\\pop\\GHS_POP_E2020_GLOBE_R2023A_4326_3ss_V1_0.tif', sep=''))
