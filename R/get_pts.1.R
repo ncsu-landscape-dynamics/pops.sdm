@@ -24,7 +24,8 @@ get_pts.1 <- function(spname, domain=NULL){
     #sp.gbif <- geodata::sp_occurrence(genus=spname, species='*', ext=bb, geo=T, removeZeros=T, download=T, fixnames=T)
   }
 
-  sp.pts <- data.frame('longitude'=c(sp.inat$longitude, sp.bien$longitude), 'latitude'=c(sp.inat$latitude, sp.bien$latitude))
+  sp.pts <- data.frame('longitude'=as.numeric(c(sp.inat$longitude, sp.bien$longitude)),
+                       'latitude'=as.numeric(c(sp.inat$latitude, sp.bien$latitude)))
   sp.pts <- unique(sp.pts[which(unique(!is.na(sp.pts$longitude), !is.na(sp.pts$latitude))),])
   sp.pts <- terra::vect(sp::SpatialPoints(sp.pts, sp::CRS('+proj=longlat +datum=WGS84 +no_defs +ellps=WGS84 +towgs84=0,0,0')))
 
