@@ -30,7 +30,7 @@ get_pts.1 <- function(spname, domain=NULL){
   sp.pts <- terra::vect(sp::SpatialPoints(sp.pts, sp::CRS('+proj=longlat +datum=WGS84 +no_defs +ellps=WGS84 +towgs84=0,0,0')))
 
   if(is.null(domain)){sp.pts <- terra::crop(x=sp.pts, y=pops.sdm::world())}
-  if(!is.null(domain)){sp.pts <- terra::crop(x=sp.pts, y=domain)}
+  if(!is.null(domain)){sp.pts <- terra::crop(x=sp.pts, y=domain, mask=T)}
 
   return(sp.pts)
 }
