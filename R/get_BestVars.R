@@ -10,8 +10,9 @@ get_BestVars <- function(envi, pts){
   envi.cv <- envi$clust
   pts.t <- which(pts$lyr1==1)
   pts.f <- which(pts$lyr1==0)
-  p.max <- 1000000-length(pts.t)
-  pts.r <- sample(x=pts.f, size=pmin(length(pts.f), p.max))
+  #p.max <- 1000000-length(pts.t)
+  #pts.r <- sample(x=pts.f, size=pmin(length(pts.f), p.max))
+  pts.r <- sample(x=pts.f, size=length(pts.t))
   pts.s <- pts[c(pts.t, pts.r)]
   myResp2 <- pts.s$lyr1
   myResp2[myResp2==0] <- NA # setting 'true absences' to NA
