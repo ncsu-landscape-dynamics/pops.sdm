@@ -157,7 +157,7 @@ get_Envi1k <- function(bio=F, elev=F, gdd=F, lc=F, pop=F, ptime=F, rnr=F, soil=F
         lcvar <- c(built, decid, everg, trees, shrub, grass, pastr, cropl, culti, wetld)
         names(lcvar) <- c('built', 'decid', 'everg', 'trees', 'shrub', 'grass', 'pastr', 'cropl', 'culti', 'wetld')
       }
-      if(all(c(file.exists(paste(lcpath, '\\nlcd_2019_1s_built_21_22_23_24.tif', sep=''),
+      if(!all(c(file.exists(paste(lcpath, '\\nlcd_2019_1s_built_21_22_23_24.tif', sep=''),
                            paste(lcpath, '\\nlcd_2019_1s_decid_41_43.tif', sep=''),
                            paste(lcpath, '\\nlcd_2019_1s_everg_42_43.tif', sep=''),
                            paste(lcpath, '\\nlcd_2019_1s_trees_41_42_43.tif', sep=''),
@@ -170,7 +170,7 @@ get_Envi1k <- function(bio=F, elev=F, gdd=F, lc=F, pop=F, ptime=F, rnr=F, soil=F
 
         if(!file.exists(paste(lcpath, 'nlcd_2019_land_cover_l48_20210604_1s.tif', sep=''))){
           lc30 <- terra::rast(paste(lcpath, 'nlcd_2019_land_cover_l48_20210604.tif', sep=''))
-          lcbase <- rasterbase(res=33)
+          lcbase <- pops.sdm::rasterbase(res=33)
           lc1s <- terra::project(lc30, lcbase, method='near', threads=T)
           # lc30.p <- terra::project(lc30, "epsg:4326", method='near', threads=T)
           # lc30.c <- terra::crop(lc30.p, terra::ext(pops.sdm::l48()))
@@ -178,7 +178,7 @@ get_Envi1k <- function(bio=F, elev=F, gdd=F, lc=F, pop=F, ptime=F, rnr=F, soil=F
           terra::writeRaster(lc1s, paste(lcpath, 'nlcd_2019_land_cover_l48_20210604_1s.tif', sep=''))
         }
         if(file.exists(paste(geodir, 'USA\\landcover\\', 'nlcd_2019_land_cover_l48_20210604_1s.tif', sep=''))){
-          lcvar <- terra::rast(paste(lcpath, 'nlcd_2019_land_cover_l48_20210604_1s.tif', sep=''))
+          lc <- terra::rast(paste(lcpath, 'nlcd_2019_land_cover_l48_20210604_1s.tif', sep=''))
         }
 
         vars <- c('built', 'decid', 'everg', 'trees', 'shrub', 'grass', 'pastr', 'cropl', 'culti', 'wetld')
