@@ -1,4 +1,4 @@
-# function(spname, #name of species. this is the only required parameter, all else are optional
+N# function(spname, #name of species. this is the only required parameter, all else are optional
 #          data, merge, #data will allow user to supply own points. merge defines whether or not they should be merged with latest BIEN points
 #          threshold, f.score, #threshold creates a thresholded version of the output. f.score allows user to tune this threshold to their use
 #          envi, var.select, #envi allows user to supply own environmental data. var.select allows for turning off variable selection algorithm
@@ -12,30 +12,31 @@
 run_SDM <- function(spname, domain=world(), res=1){
   #### 1.0 Load Environmental data and species data ####
   #if(sources(domain)==sources(world())){
-  envi.1k <- pops.sdm::get_Envi1k(bio=T, elev=F, soil=F, lc=F, ptime=F, gdd=T, rnr=T, tbase=5) #envi.cv <- envi.1k$clust
-  envi.1k <- pops.sdm::get_Envi1k(bio=T, ptime=T, soil=T, pop=T, res=100)
-  envi <- terra::crop(x=envi.1k$rast, y=domain, mask=T)#; envi.1k$rast <- envi
+  #domain <- pops.sdm::l48()
+  domain <- pops.sdm::state(c('Oregon'))
+  #spname <- 'Ailanthus altissima'
+  spname <- "Notholithocarpus densiflorus"
+ # res <- 1000
+  res <- 33
+  envi.vars <- pops.sdm::get_Envi1k(bio=F, lc=T, ptime=F, soil=F, pop=F, res=res)
+  base.r <- pops.sdm::rasterbase(res=res)
+  base.r <- terra::crop(x=base.r, y=domain, mask=T)
   pts.1 <- pops.sdm::get_pts.1(spname=spname, domain=domain)
 
-  #### 1.1 Prep data ####
-  if(is.null(res)){res <- 1}
-  if(res!=1){
-    if(res>1){envi <- terra::aggregate(envi, fact=res, fun='mean')}
-    if(res<1){envi <- terra::disagg(envi, fact=1/res, method='bilinear')}
-  }
-
-  pts.r <- terra::rasterize(x=pts.1, y=envi, fun='length', background=0)
-  pts.r <- (pts.r*(envi[[1]]*0+1))>0
+  #### 1.1 Prep data ###
+  envi.r <- terra::project(x=envi.vars$rast, y=base.r, threads=T); envi.r <- envi.r*base.r
+  pts.r <- terra::rasterize(x=pts.1, y=envi.r, fun='length', background=0)
+  pts.r <- (pts.r*(base.r))>0
   pts.2 <- terra::as.points(pts.r)
   myName <- stringr::str_replace(tolower(spname),' ', '_')
-  myResp <- pts.2$lyr1 # the presence/absences data for our species
+  myResp <- pts.2[[1]] # the presence/absences data for our species
   myResp[myResp==0] <- NA # setting 'true absences' to NA
   myRespXY <- terra::crds(pts.2) # the XY coordinates of species data
 
 
   #### 2.0 Run variable selection function to choose the ideal variables ####
-  envi.best <- pops.sdm::get_BestVars(list('rast'=envi, 'clust'=envi.1k$clust), pts.2)
-
+  envi.best <- pops.sdm::get_BestVars(list('rast'=envi.r, 'clust'=envi.vars$clust), pts.2)
+  envi.best <- raster::stack(envi.best)
 
   #### 3.0 Define options and parameters for modeling ####
   #mod.dir <- 'C:\Users\bjselige\Documents\pops.sdm\notholithocarpus.densiflorus'
@@ -56,12 +57,13 @@ run_SDM <- function(spname, domain=world(), res=1){
   #### 4.0 Run and evaluate the models ####
   myModels <- biomod2::BIOMOD_Modeling(data = myData,
                                        modeling.id = paste(myName,"AllModels",sep=""),
-                                       models = myAlgos,
+                                       models = 'GLM',
                                        models.options = myOptions,
                                        NbRunEval = 1, #3, #number of runs
                                        DataSplit = 80,
                                        models.eval.meth = myEvals,
                                        VarImport = 1,
+                                       SaveObj = T,
                                        do.full.models = F) # use this option if you don't want a data split
   myEval <- biomod2::get_evaluations(myModels) # get all models evaluation
 
@@ -78,10 +80,18 @@ run_SDM <- function(spname, domain=world(), res=1){
                                        binary.meth = myEvals)
   myProj2 <- biomod2::get_predictions(myProj) # if you want to make custom plots, you can also get the projected map
 
+  vals1 <- na.omit(values(envi.best))
+  vals2 <- na.omit(values(myProj@proj@val))
 
+  myname2 <- stringr::str_replace(myName, '_', '.')
+  mysub <- c(paste(myname2, '_PA1_RUN1_GAM', sep=''),
+             paste(myname2,'_PA1_RUN1_GLM', sep=''),
+             paste(myname2,'_PA1_RUN1_RF', sep=''),
+             paste(myname2,'_PA1_RUN1_ANN', sep=''),
+             paste(myname2,'_PA1_RUN1_MARS', sep=''))
   #### 6.0 Ensembling the models ####
-  myEnsemble <- biomod2::BIOMOD_EnsembleModeling(modeling.output = myModels,
-                                                 chosen.models = 'all',
+  myEnsemble <- biomod2::BIOMOD_EnsembleModeling(modeling.output =  myModels,
+                                                 chosen.models = myModels@models.computed[which(myModels@models.computed%in%mysub)],
                                                  em.by = 'all', #'all' combines all algos and PA runs into a single ensemble.
                                                  eval.metric = 'TSS', #only mean.weight and committee averaging use this argument, leaving it as 'TSS' is faster
                                                  models.eval.meth = myEvals,
@@ -93,12 +103,12 @@ run_SDM <- function(spname, domain=world(), res=1){
                                                  committee.averaging = F)
 
   myEnsembleCA <- biomod2::BIOMOD_EnsembleModeling(modeling.output = myModels,
-                                                 chosen.models = 'all',
-                                                 em.by = 'all', #'all' combines all algos and PA runs into a single ensemble.
-                                                 eval.metric = 'all',#   eval.metric = 'TSS',
-                                                 models.eval.meth = myEvals,
-                                                 prob.mean = F, prob.cv = F, prob.ci = F, #prob.ci.alpha = 0.05,
-                                                 committee.averaging = T)
+                                                   chosen.models = myModels@models.computed[which(myModels@models.computed%in%mysub)],
+                                                   em.by = 'all', #'all' combines all algos and PA runs into a single ensemble.
+                                                   eval.metric = 'all',#   eval.metric = 'TSS',
+                                                   models.eval.meth = myEvals,
+                                                   prob.mean = F, prob.cv = F, prob.ci = F, #prob.ci.alpha = 0.05,
+                                                   committee.averaging = T)
   myEvalEM <- biomod2::get_evaluations(myEnsemble) # get evaluation scores
   myEvalCA <- biomod2::get_evaluations(myEnsembleCA)
 
@@ -130,12 +140,12 @@ run_SDM <- function(spname, domain=world(), res=1){
                           X.Binary <- raster::stack(paste(tolower(stringr::str_replace(spname, ' ', '.')),
                                                           '\\proj_current\\proj_current_',
                                                           tolower(stringr::str_replace(spname, ' ', '.')),
-                                                          '_', X.Eval, 'bin.tif', sep=''))
+                                                          '_', X.Eval, 'bin.grd', sep=''))
                           #names(X.Binary) <- paste(X.Eval, substr(myProj@models.projected, nchar(spname)+1, max(nchar(myProj@models.projected))), sep='')
                           return(X.Binary)}); myBinary <- raster::stack(unlist(myBinary))
 
   myBinaryEM <- raster::stack(paste(tolower(stringr::str_replace(spname, ' ', '.')), '\\proj_current\\proj_current_',
-                                    tolower(stringr::str_replace(spname, ' ', '.')), '_ensemble_', myEvals[[1]], 'bin.tif', sep=''))
+                                    tolower(stringr::str_replace(spname, ' ', '.')), '_ensemble_', myEvals[[1]], 'bin.grd', sep=''))
   #names(myBinaryEM) <- myEvals
 
   ##### 5. Thresholding
@@ -158,6 +168,19 @@ run_SDM <- function(spname, domain=world(), res=1){
   myEval2 <- list('All'=myEval, 'Ensemble'=myEvalEM, 'trs.metrics'=list('best'=tr.best$trs, 'full'=trs.metrics))
   outlist <- list('Data'=myData, 'Model'=myModels, 'Evaluation'=myEval2, 'Projections'=list('All'=myProj2, 'Ensemble'=p3))
   return(outlist)
+
+  meta.df <- data.frame(spname=spname,
+                        extent=,
+                        resolution=res,
+                        n.points=length(pts.1),
+                        sources=c('GBIF', 'BIEN'),
+                        best.vars=names(envi.best),
+                        all.vars=names(envi.vars),
+                        algorithmns=myAlgos,
+                        tss=,
+                        weights=,
+                        threshold=tr.best$trs)
+
 }
 
 
