@@ -133,18 +133,32 @@ get_Envi1k <- function(bio=F, elev=F, gdd=F, lc=F, pop=F, ptime=F, rnr=F, soil=F
     }
     if(res<1000){
       lcpath <- paste(geodir, 'USA\\landcover\\', sep='')
-      if(!file.exists(paste(lcpath, 'nlcd_2019_land_cover_l48_20210604_1s.tif', sep=''))){
-        lc30 <- terra::rast(paste(lcpath, 'nlcd_2019_land_cover_l48_20210604.tif', sep=''))
-        lcbase <- rasterbase(res=33)
-        lc1s <- terra::project(lc30, lcbase, method='near', threads=T)
-        # lc30.p <- terra::project(lc30, "epsg:4326", method='near', threads=T)
-        # lc30.c <- terra::crop(lc30.p, terra::ext(pops.sdm::l48()))
-        # lc30.m <- terra::crop(lc30.m, y=pops.sdm::l48(), mask=T)
-        terra::writeRaster(lc1s, paste(lcpath, 'nlcd_2019_land_cover_l48_20210604_1s.tif', sep=''))
-      }
-      if(file.exists(paste(geodir, 'USA\\landcover\\', 'nlcd_2019_land_cover_l48_20210604_1s.tif', sep=''))){
-        lcvar <- terra::rast(paste(lcpath, 'nlcd_2019_land_cover_l48_20210604_1s.tif', sep=''))
-      }
+      built <- terra::rast(paste(lcpath, '\\nlcd_2019_1s_built_21_22_23_24.tif', sep=''))
+      decid <- terra::rast(paste(lcpath, '\\nlcd_2019_1s_decid_41_43.tif', sep=''))
+      everg <- terra::rast(paste(lcpath, '\\nlcd_2019_1s_everg_42_43.tif', sep=''))
+      trees <- terra::rast(paste(lcpath, '\\nlcd_2019_1s_trees_41_42_43.tif', sep=''))
+      shrub <- terra::rast(paste(lcpath, '\\nlcd_2019_1s_shrub_52.tif', sep=''))
+      grass <- terra::rast(paste(lcpath, '\\nlcd_2019_1s_grass_71.tif', sep=''))
+      pastr <- terra::rast(paste(lcpath, '\\nlcd_2019_1s_pastr_81.tif', sep=''))
+      cropl <- terra::rast(paste(lcpath, '\\nlcd_2019_1s_cropl_82.tif', sep=''))
+      culti <- terra::rast(paste(lcpath, '\\nlcd_2019_1s_culti_81_82.tif', sep=''))
+      wetld <- terra::rast(paste(lcpath, '\\nlcd_2019_1s_wetld_90_95.tif', sep=''))
+
+      lcvar <- c(built, decid, everg, trees, shrub, grass, pastr, cropl, culti, wetld)
+      names(lcvar) <- c('built', 'decid', 'everg', 'trees', 'shrub', 'grass', 'pastr', 'cropl', 'culti', 'wetld')
+
+      # if(!file.exists(paste(lcpath, 'nlcd_2019_land_cover_l48_20210604_1s.tif', sep=''))){
+      #   lc30 <- terra::rast(paste(lcpath, 'nlcd_2019_land_cover_l48_20210604.tif', sep=''))
+      #   lcbase <- rasterbase(res=33)
+      #   lc1s <- terra::project(lc30, lcbase, method='near', threads=T)
+      #   # lc30.p <- terra::project(lc30, "epsg:4326", method='near', threads=T)
+      #   # lc30.c <- terra::crop(lc30.p, terra::ext(pops.sdm::l48()))
+      #   # lc30.m <- terra::crop(lc30.m, y=pops.sdm::l48(), mask=T)
+      #   terra::writeRaster(lc1s, paste(lcpath, 'nlcd_2019_land_cover_l48_20210604_1s.tif', sep=''))
+      # }
+      # if(file.exists(paste(geodir, 'USA\\landcover\\', 'nlcd_2019_land_cover_l48_20210604_1s.tif', sep=''))){
+      #   lcvar <- terra::rast(paste(lcpath, 'nlcd_2019_land_cover_l48_20210604_1s.tif', sep=''))
+      # }
       if(res>33){
         if(!file.exists(paste(lcpath, 'ncld_2019_', res, 'm.tif', sep=''))){
           if(res==250){
@@ -161,7 +175,10 @@ get_Envi1k <- function(bio=F, elev=F, gdd=F, lc=F, pop=F, ptime=F, rnr=F, soil=F
         }
       }
     }
-    lccl <- data.frame(var=names(lcvar), cluster='Landcover 1')
+    lccl <- data.frame(var=names(lcvar), cluster=NA)
+    lccl$cluster[which(lccl$var%in%c('built'))] <- 'Development'
+    lccl$cluster[which(lccl$var%in%c('decid', 'everg', 'trees', 'shrub', 'grass', 'wetld'))] <- 'Vegetation'
+    lccl$cluster[which(lccl$var%in%c('pastr', 'cropl', 'culti'))] <- 'Agriculture'
   }
 
   if(pop==T){
@@ -195,7 +212,7 @@ get_Envi1k <- function(bio=F, elev=F, gdd=F, lc=F, pop=F, ptime=F, rnr=F, soil=F
         }
       }
     }
-    names(popvar) <- 'Population'; popcl <- data.frame(var=names(popvar), cluster='Landcover 1')
+    names(popvar) <- 'Population'; popcl <- data.frame(var=names(popvar), cluster='Development')
   }
 
   if(ptime==T){
@@ -221,7 +238,7 @@ get_Envi1k <- function(bio=F, elev=F, gdd=F, lc=F, pop=F, ptime=F, rnr=F, soil=F
   if(rnr==T){
     rnrvar <- terra::rast(list.files(paste(geodir, 'Global\\',sep=''), '.dist.wrld', full.names = T))
     names(rnrvar) <- c('Road.Dist', 'Rail.Dist')
-    rnrcl <- data.frame(var=names(rnrvar), cluster='Roads/Rails 1')
+    rnrcl <- data.frame(var=names(rnrvar), cluster='Roads/Rails')
   }
 
   if(soil==T){
@@ -288,7 +305,7 @@ get_Envi1k <- function(bio=F, elev=F, gdd=F, lc=F, pop=F, ptime=F, rnr=F, soil=F
                          'Soil.h2o.33.0cm', 'Soil.h2o.33.mean', 'Soil.h2o.33.200cm',
                          'Soil.h2o.1500.0cm', 'Soil.h2o.1500.mean', 'Soil.h2o.1500.200cm')
     }
-    solcl <- data.frame(var=names(solvar), cluster='Soil 1')
+    solcl <- data.frame(var=names(solvar), cluster='Soil')
   }
 
   if(bio==F){biovar <- NULL; biocl <- NULL}
