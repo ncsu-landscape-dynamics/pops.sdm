@@ -170,15 +170,15 @@ run_SDM <- function(spname, domain=world(), res=1){
   return(outlist)
 
   meta.df <- data.frame(spname=spname,
-                        extent=,
+                        extent='extent',
                         resolution=res,
                         n.points=length(pts.1),
                         sources=c('GBIF', 'BIEN'),
                         best.vars=names(envi.best),
                         all.vars=names(envi.vars),
                         algorithmns=myAlgos,
-                        tss=,
-                        weights=,
+                        tss=myEvals,
+                        weights='weights',
                         threshold=tr.best$trs)
 
 }
