@@ -133,32 +133,85 @@ get_Envi1k <- function(bio=F, elev=F, gdd=F, lc=F, pop=F, ptime=F, rnr=F, soil=F
     }
     if(res<1000){
       lcpath <- paste(geodir, 'USA\\landcover\\', sep='')
-      built <- terra::rast(paste(lcpath, '\\nlcd_2019_1s_built_21_22_23_24.tif', sep=''))
-      decid <- terra::rast(paste(lcpath, '\\nlcd_2019_1s_decid_41_43.tif', sep=''))
-      everg <- terra::rast(paste(lcpath, '\\nlcd_2019_1s_everg_42_43.tif', sep=''))
-      trees <- terra::rast(paste(lcpath, '\\nlcd_2019_1s_trees_41_42_43.tif', sep=''))
-      shrub <- terra::rast(paste(lcpath, '\\nlcd_2019_1s_shrub_52.tif', sep=''))
-      grass <- terra::rast(paste(lcpath, '\\nlcd_2019_1s_grass_71.tif', sep=''))
-      pastr <- terra::rast(paste(lcpath, '\\nlcd_2019_1s_pastr_81.tif', sep=''))
-      cropl <- terra::rast(paste(lcpath, '\\nlcd_2019_1s_cropl_82.tif', sep=''))
-      culti <- terra::rast(paste(lcpath, '\\nlcd_2019_1s_culti_81_82.tif', sep=''))
-      wetld <- terra::rast(paste(lcpath, '\\nlcd_2019_1s_wetld_90_95.tif', sep=''))
+      if(all(c(file.exists(paste(lcpath, '\\nlcd_2019_1s_built_21_22_23_24.tif', sep=''),
+                           paste(lcpath, '\\nlcd_2019_1s_decid_41_43.tif', sep=''),
+                           paste(lcpath, '\\nlcd_2019_1s_everg_42_43.tif', sep=''),
+                           paste(lcpath, '\\nlcd_2019_1s_trees_41_42_43.tif', sep=''),
+                           paste(lcpath, '\\nlcd_2019_1s_shrub_52.tif', sep=''),
+                           paste(lcpath, '\\nlcd_2019_1s_grass_71.tif', sep=''),
+                           paste(lcpath, '\\nlcd_2019_1s_pastr_81.tif', sep=''),
+                           paste(lcpath, '\\nlcd_2019_1s_cropl_82.tif', sep=''),
+                           paste(lcpath, '\\nlcd_2019_1s_culti_81_82.tif', sep=''),
+                           paste(lcpath, '\\nlcd_2019_1s_wetld_90_95.tif', sep=''))))){
 
-      lcvar <- c(built, decid, everg, trees, shrub, grass, pastr, cropl, culti, wetld)
-      names(lcvar) <- c('built', 'decid', 'everg', 'trees', 'shrub', 'grass', 'pastr', 'cropl', 'culti', 'wetld')
+        built <- terra::rast(paste(lcpath, '\\nlcd_2019_1s_built_21_22_23_24.tif', sep=''))
+        decid <- terra::rast(paste(lcpath, '\\nlcd_2019_1s_decid_41_43.tif', sep=''))
+        everg <- terra::rast(paste(lcpath, '\\nlcd_2019_1s_everg_42_43.tif', sep=''))
+        trees <- terra::rast(paste(lcpath, '\\nlcd_2019_1s_trees_41_42_43.tif', sep=''))
+        shrub <- terra::rast(paste(lcpath, '\\nlcd_2019_1s_shrub_52.tif', sep=''))
+        grass <- terra::rast(paste(lcpath, '\\nlcd_2019_1s_grass_71.tif', sep=''))
+        pastr <- terra::rast(paste(lcpath, '\\nlcd_2019_1s_pastr_81.tif', sep=''))
+        cropl <- terra::rast(paste(lcpath, '\\nlcd_2019_1s_cropl_82.tif', sep=''))
+        culti <- terra::rast(paste(lcpath, '\\nlcd_2019_1s_culti_81_82.tif', sep=''))
+        wetld <- terra::rast(paste(lcpath, '\\nlcd_2019_1s_wetld_90_95.tif', sep=''))
+        lcvar <- c(built, decid, everg, trees, shrub, grass, pastr, cropl, culti, wetld)
+        names(lcvar) <- c('built', 'decid', 'everg', 'trees', 'shrub', 'grass', 'pastr', 'cropl', 'culti', 'wetld')
+      }
+      if(all(c(file.exists(paste(lcpath, '\\nlcd_2019_1s_built_21_22_23_24.tif', sep=''),
+                           paste(lcpath, '\\nlcd_2019_1s_decid_41_43.tif', sep=''),
+                           paste(lcpath, '\\nlcd_2019_1s_everg_42_43.tif', sep=''),
+                           paste(lcpath, '\\nlcd_2019_1s_trees_41_42_43.tif', sep=''),
+                           paste(lcpath, '\\nlcd_2019_1s_shrub_52.tif', sep=''),
+                           paste(lcpath, '\\nlcd_2019_1s_grass_71.tif', sep=''),
+                           paste(lcpath, '\\nlcd_2019_1s_pastr_81.tif', sep=''),
+                           paste(lcpath, '\\nlcd_2019_1s_cropl_82.tif', sep=''),
+                           paste(lcpath, '\\nlcd_2019_1s_culti_81_82.tif', sep=''),
+                           paste(lcpath, '\\nlcd_2019_1s_wetld_90_95.tif', sep=''))))){
 
-      # if(!file.exists(paste(lcpath, 'nlcd_2019_land_cover_l48_20210604_1s.tif', sep=''))){
-      #   lc30 <- terra::rast(paste(lcpath, 'nlcd_2019_land_cover_l48_20210604.tif', sep=''))
-      #   lcbase <- rasterbase(res=33)
-      #   lc1s <- terra::project(lc30, lcbase, method='near', threads=T)
-      #   # lc30.p <- terra::project(lc30, "epsg:4326", method='near', threads=T)
-      #   # lc30.c <- terra::crop(lc30.p, terra::ext(pops.sdm::l48()))
-      #   # lc30.m <- terra::crop(lc30.m, y=pops.sdm::l48(), mask=T)
-      #   terra::writeRaster(lc1s, paste(lcpath, 'nlcd_2019_land_cover_l48_20210604_1s.tif', sep=''))
-      # }
-      # if(file.exists(paste(geodir, 'USA\\landcover\\', 'nlcd_2019_land_cover_l48_20210604_1s.tif', sep=''))){
-      #   lcvar <- terra::rast(paste(lcpath, 'nlcd_2019_land_cover_l48_20210604_1s.tif', sep=''))
-      # }
+        if(!file.exists(paste(lcpath, 'nlcd_2019_land_cover_l48_20210604_1s.tif', sep=''))){
+          lc30 <- terra::rast(paste(lcpath, 'nlcd_2019_land_cover_l48_20210604.tif', sep=''))
+          lcbase <- rasterbase(res=33)
+          lc1s <- terra::project(lc30, lcbase, method='near', threads=T)
+          # lc30.p <- terra::project(lc30, "epsg:4326", method='near', threads=T)
+          # lc30.c <- terra::crop(lc30.p, terra::ext(pops.sdm::l48()))
+          # lc30.m <- terra::crop(lc30.m, y=pops.sdm::l48(), mask=T)
+          terra::writeRaster(lc1s, paste(lcpath, 'nlcd_2019_land_cover_l48_20210604_1s.tif', sep=''))
+        }
+        if(file.exists(paste(geodir, 'USA\\landcover\\', 'nlcd_2019_land_cover_l48_20210604_1s.tif', sep=''))){
+          lcvar <- terra::rast(paste(lcpath, 'nlcd_2019_land_cover_l48_20210604_1s.tif', sep=''))
+        }
+
+        vars <- c('built', 'decid', 'everg', 'trees', 'shrub', 'grass', 'pastr', 'cropl', 'culti', 'wetld')
+
+        lc.sum <- function(lc, var){
+          if(var=='built'){vals <- c(21, 22, 23, 24)}
+          if(var=='decid'){vals <- c(41, 43)}
+          if(var=='everg'){vals <- c(42, 43)}
+          if(var=='trees'){vals <- c(41, 42, 43)}
+          if(var=='shrub'){vals <- c(52)}
+          if(var=='grass'){vals <- c(71)}
+          if(var=='pastr'){vals <- c(81)}
+          if(var=='cropl'){vals <- c(82)}
+          if(var=='culti'){vals <- c(81, 82)}
+          if(var=='wetld'){vals <- c(90, 95)}
+          lc.vals <- lc==vals
+
+          if(var%in%c('built', 'decid', 'everg')){
+            if(var=='built'){weights <- c(.25, .5, .75, 1)}
+            if(var%in%c('decid', 'everg')){weights <- c(1, .5)}
+            lc.vals <- (lc.vals)*weights}
+          lc.var <- terra::app(lc.vals, fun='sum')
+
+          terra::writeRaster(lc.var, paste('Q:\\Shared drives\\Data\\Raster\\USA\\landcover\\',
+                                           paste('nlcd_2019_1s', var, paste(vals, collapse='_'), sep='_'),
+                                           '.tif', sep=''))
+        }
+
+        i <- 1
+        for(i in i:length(vars)){lc.sum(lc, var=vars[[i]])}
+
+      }
+
       if(res>33){
         if(!file.exists(paste(lcpath, 'ncld_2019_', res, 'm.tif', sep=''))){
           if(res==250){
