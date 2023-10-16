@@ -1,6 +1,6 @@
 #' @export
 
-lc <- terra::rast('C:\\Users\\bjselige\\Downloads\\nlcd_2019_land_cover_l48_20210604_1s.tif')
+lc <- terra::rast('Q:\\Shared drives\\Data\\Raster\\USA\\landcover\\nlcd_2019_land_cover_l48_20210604_1s.tif')
 vars <- c('built', 'decid', 'everg', 'trees', 'shrub', 'grass', 'pastr', 'cropl', 'culti', 'wetld')
 
 lc.sum <- function(lc, var){
