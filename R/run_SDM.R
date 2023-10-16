@@ -1,4 +1,4 @@
-N# function(spname, #name of species. this is the only required parameter, all else are optional
+# function(spname, #name of species. this is the only required parameter, all else are optional
 #          data, merge, #data will allow user to supply own points. merge defines whether or not they should be merged with latest BIEN points
 #          threshold, f.score, #threshold creates a thresholded version of the output. f.score allows user to tune this threshold to their use
 #          envi, var.select, #envi allows user to supply own environmental data. var.select allows for turning off variable selection algorithm
