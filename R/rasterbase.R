@@ -16,29 +16,43 @@ rasterbase <- function(res){
     if(file.exists(paste(geodir, 'USA\\base_', res, 'm.tif', sep=''))==F){
       if(res!=33){
         if(res==500){
-          base.rast <- terra::rast('Q:\\Shared drives\\Data\\Original\\BioClimComposite_1971_2000_400m.tif')
-          base.rast <- base.rast[[1]]
-          base.rast <- terra::project(base.rast, "epsg:4326", threads=T)
+          base.rast <- terra::rast("Q:\\Shared drives\\Data\\Raster\\USA\\soils\\250m\\ph.mean.tif")
           base.rast <- terra::crop(base.rast, terra::ext(pops.sdm::l48()))
-          base.rast <- terra::crop(base.rast, y=pops.sdm::l48(), mask=T)
+          base.rast <- terra::aggregate(x=base.rast, fact=2)
+          base.rast <- base.rast/base.rast
+          terra::writeRaster(base.rast, paste(geodir, 'USA\\base_', res, 'm.tif', sep=''))
         }
         if(res==250){
           base.rast <- terra::rast("Q:\\Shared drives\\Data\\Raster\\USA\\soils\\250m\\ph.mean.tif")
           base.rast <- terra::crop(base.rast, terra::ext(pops.sdm::l48()))
-          base.rast <- terra::crop(base.rast, y=pops.sdm::l48(), mask=T)
+          base.rast <- base.rast/base.rast
+          terra::writeRaster(base.rast, paste(geodir, 'USA\\base_', res, 'm.tif', sep=''))
         }
         if(res==100){
+          if(file.exists('Q:\\Shared drives\\Data\\Raster\\USA\\base_33m.tif')){
+            base.rast <- terra::rast('Q:\\Shared drives\\Data\\Raster\\USA\\base_33m.tif')
+            base.rast <- aggregate(base.rast, 3)
+            terra::writeRaster(base.rast, paste(geodir, 'USA\\base_', res, 'm.tif', sep=''), overwrite=T)
+          }
+          if(!file.exists('Q:\\Shared drives\\Data\\Raster\\USA\\base_33m.tif')){
           base.rast <- terra::rast(paste(geodir, 'Global\\pop\\GHS_POP_E2020_GLOBE_R2023A_4326_3ss_V1_0.tif', sep=''))
           base.rast <- terra::crop(base.rast, terra::ext(pops.sdm::l48()))
-          base.rast <- terra::crop(x=base.rast, y=pops.sdm::l48(), mask=T)
+          terra::writeRaster(base.rast, paste(geodir, 'USA\\base_', res, 'm.tif', sep=''))
+          }
         }
-        base.rast <- base.rast/base.rast
-        terra::writeRaster(base.rast, paste(geodir, 'USA\\base_', res, 'm.tif', sep=''))
+
       }
       if(res==33){
+        if(file.exists(paste('Q:\\Shared drives\\Data\\Raster\\USA\\landcover\\nlcd_2019_land_cover_l48_20210604_1s.tif', sep=''))){
+         base.rast <- terra::rast(paste('Q:\\Shared drives\\Data\\Raster\\USA\\landcover\\nlcd_2019_land_cover_l48_20210604_1s.tif', sep=''))
+         base.rast <- terra::app(base.rast!=c(0,11), min)
+         terra::writeRaster(base.rast, paste(geodir, 'USA\\base_', res, 'm.tif', sep=''), overwrite=T)
+        }
+        if(!file.exists(paste('Q:\\Shared drives\\Data\\Raster\\USA\\landcover\\nlcd_2019_land_cover_l48_20210604_1s.tif', sep=''))){
         base.rast <- pops.sdm::rasterbase(100)
         base.rast <- terra::disagg(x=base.rast, fact=3)
         terra::writeRaster(base.rast, paste(geodir, 'USA\\base_', res, 'm.tif', sep=''))
+        }
       }
     }
     if(file.exists(paste(geodir, 'USA\\base_', res, 'm.tif', sep=''))==T){
