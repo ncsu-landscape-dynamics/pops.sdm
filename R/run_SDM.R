@@ -9,30 +9,49 @@
 # require(terra)
 #' @export
 
-run_SDM <- function(spname, domain=world(), res=1){
+run_SDM <- function(spname, domain=world(), res){
   #### 1.0 Load Environmental data and species data ####
   #if(sources(domain)==sources(world())){
   #domain <- pops.sdm::l48()
   domain <- pops.sdm::state(c('Oregon'))
-  #spname <- 'Ailanthus altissima'
-  spname <- "Notholithocarpus densiflorus"
- # res <- 1000
-  res <- 33
-  envi.vars <- pops.sdm::get_Envi1k(bio=F, lc=T, ptime=F, soil=F, pop=F, res=res)
-  base.r <- pops.sdm::rasterbase(res=res)
-  base.r <- terra::crop(x=base.r, y=domain, mask=T)
+  spname <- "Notholithocarpus densiflorus"; myName <- stringr::str_replace(tolower(spname),' ', '_')
+  res <- 1000
+  dir <- getwd()
+
+
+  #### 1.1 Gather Environmental Data ####
+  envi.vars <- pops.sdm::get_Envi1k(bio=T, lc=F, ptime=F, soil=F, pop=F, res=res)
+  base.r <- terra::crop(x=pops.sdm::rasterbase(res=res), y=domain, mask=T)
+
+  if(!file.exists(paste(dir, '/envi.', terra::nrow(envi.r), terra::ncol(envi.r), terra::nlyr(envi.r), '.tif', sep=''))){
+    envi.r <- terra::crop(x=envi.vars$rast, y=domain, mask=T)
+    envi.r <- envi.r*base.r
+    terra::writeRaster(envi.r, paste(dir, '/envi.', terra::nrow(envi.r), terra::ncol(envi.r), terra::nlyr(envi.r), '.tif', sep=''))
+  }
+  if(file.exists(paste(dir, '/envi.', terra::nrow(envi.r), terra::ncol(envi.r), terra::nlyr(envi.r), '.tif', sep=''))){
+    envi.r <- terra::rast(paste(dir, '/envi.', terra::nrow(envi.r), terra::ncol(envi.r), terra::nlyr(envi.r), '.tif', sep=''))
+  }
+
+  #### 1.2 Gather Points ####
   pts.1 <- pops.sdm::get_pts.1(spname=spname, domain=domain)
-
-  #### 1.1 Prep data ###
-  envi.r <- terra::project(x=envi.vars$rast, y=base.r, threads=T); envi.r <- envi.r*base.r
-  pts.r <- terra::rasterize(x=pts.1, y=envi.r, fun='length', background=0)
+  #if(!file.exists()){
+  pts.r <- terra::rasterize(x=pts.1, y=base.r, fun='length', background=0)
   pts.r <- (pts.r*(base.r))>0
-  pts.2 <- terra::as.points(pts.r)
-  myName <- stringr::str_replace(tolower(spname),' ', '_')
-  myResp <- pts.2[[1]] # the presence/absences data for our species
+  pts.2 <- terra::as.points(pts.r); names(pts.2) <- 'lyr1'
+  #myResp <- pts.2[[1]]; # the presence/absences data for our species
+  pts.t <- which(pts.2$lyr1==1)
+  pts.f <- which(pts.2$lyr1==0)
+  pts.r <- sample(x=pts.f, size=length(pts.t))
+  pts.s <- pts.2[c(pts.t, pts.r)]
+  myResp <- pts.s$lyr1
   myResp[myResp==0] <- NA # setting 'true absences' to NA
-  myRespXY <- terra::crds(pts.2) # the XY coordinates of species data
+  myXY <- terra::crds(pts.s)#myXY <- terra::crds(pts.2) # the XY coordinates of species data
 
+  PA.df <- as.data.frame(myResp); PA.df[is.na(PA.df)] <- FALSE
+  PA.fact <- sum(PA.df==F)/sum(myResp, na.rm=T)
+  PA.df$myResp[which(PA.df==F)[round((1:sum(myResp, na.rm=T))*PA.fact)]] <- TRUE
+  PA.df$myResp <- as.logical(PA.df$myResp)
+  #}
 
   #### 2.0 Run variable selection function to choose the ideal variables ####
   envi.best <- pops.sdm::get_BestVars(list('rast'=envi.r, 'clust'=envi.vars$clust), pts.2)
@@ -43,11 +62,12 @@ run_SDM <- function(spname, domain=world(), res=1){
   myOptions <- biomod2::BIOMOD_ModelingOptions()
   myData <- biomod2::BIOMOD_FormatingData(resp.var = myResp,
                                           expl.var = envi.best,
-                                          resp.xy = myRespXY,
+                                          resp.xy = myXY,
                                           resp.name = myName,
                                           PA.nb.rep = 1,
-                                          PA.strategy = 'random',
-                                          PA.nb.absences = sum(myResp, na.rm=T))
+                                          PA.strategy = 'user.defined', #'random',
+                                          #PA.nb.absences = sum(myResp, na.rm=T)
+                                          PA.table = PA.df)
   # Notes on algorithm choices; CTA is redundant with Random Forest, FDA and SRE have relatively low performance
   myAlgos <- c('GAM', 'GBM', 'GLM', 'RF', 'ANN', 'MARS', 'MAXENT.Phillips')
   # Notes on evaluation methods: POD/SR/FR/BIAS is not useful, KAPPA, and TSS get similar results
@@ -170,7 +190,7 @@ run_SDM <- function(spname, domain=world(), res=1){
   return(outlist)
 
   meta.df <- data.frame(spname=spname,
-                        extent='extent',
+                        #extent='extent',
                         resolution=res,
                         n.points=length(pts.1),
                         sources=c('GBIF', 'BIEN'),
