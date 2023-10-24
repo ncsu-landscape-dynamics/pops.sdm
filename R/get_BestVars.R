@@ -13,8 +13,8 @@ get_BestVars <- function(envi, pts){
   #p.max <- 1000000-length(pts.t)
   #pts.r <- sample(x=pts.f, size=pmin(length(pts.f), p.max))
   pts.s <- sample(x=pts.f, size=length(pts.t))
-  myResp <- pts.v[c(pts.t, pts.s)]; myResp[myResp==0] <- NA
-  myXY <- terra::xyFromCell(object=envi2, cell=c(pts.t, pts.s))
+  myResp2 <- pts.v[c(pts.t, pts.s)]; myResp[myResp==0] <- NA
+  myXY2 <- terra::xyFromCell(object=envi2, cell=c(pts.t, pts.s))
   myName2 <- 'test'
   nreps <- 1 #unnecessary since running full models yields same results, no extra reps needed
 
