@@ -15,42 +15,53 @@ run_SDM <- function(spname, domain=world(), res){
   #domain <- pops.sdm::l48()
   domain <- pops.sdm::state(c('Oregon'))
   spname <- "Notholithocarpus densiflorus"; myName <- stringr::str_replace(tolower(spname),' ', '_')
-  res <- 1000
+  res <- 33
   dir <- getwd()
 
 
   #### 1.1 Gather Environmental Data ####
-  envi.vars <- pops.sdm::get_Envi1k(bio=T, lc=F, ptime=F, soil=F, pop=F, res=res)
+  envi.vars <- pops.sdm::get_Envi1k(bio=T, lc=T, ptime=F, soil=F, pop=F, res=res)
   base.r <- terra::crop(x=pops.sdm::rasterbase(res=res), y=domain, mask=T)
 
-  if(!file.exists(paste(dir, '/envi.', terra::nrow(envi.r), terra::ncol(envi.r), terra::nlyr(envi.r), '.tif', sep=''))){
+  if(!file.exists(paste(dir, '/envi.', terra::nrow(base.r), terra::ncol(base.r), terra::nlyr(envi.vars$rast), '.tif', sep=''))){
     envi.r <- terra::crop(x=envi.vars$rast, y=domain, mask=T)
     envi.r <- envi.r*base.r
-    terra::writeRaster(envi.r, paste(dir, '/envi.', terra::nrow(envi.r), terra::ncol(envi.r), terra::nlyr(envi.r), '.tif', sep=''))
+    terra::writeRaster(envi.r, paste(dir, '/envi.', terra::nrow(base.r), terra::ncol(base.r), terra::nlyr(envi.vars$rast), '.tif', sep=''))
   }
-  if(file.exists(paste(dir, '/envi.', terra::nrow(envi.r), terra::ncol(envi.r), terra::nlyr(envi.r), '.tif', sep=''))){
-    envi.r <- terra::rast(paste(dir, '/envi.', terra::nrow(envi.r), terra::ncol(envi.r), terra::nlyr(envi.r), '.tif', sep=''))
+  if(file.exists(paste(dir, '/envi.', terra::nrow(base.r), terra::ncol(base.r), terra::nlyr(envi.vars$rast), '.tif', sep=''))){
+    envi.r <- terra::rast(paste(dir, '/envi.', terra::nrow(base.r), terra::ncol(base.r), terra::nlyr(envi.vars$rast), '.tif', sep=''))
   }
 
   #### 1.2 Gather Points ####
   pts.1 <- pops.sdm::get_pts.1(spname=spname, domain=domain)
+  # myResp <- rep(1, length(pts.1))#pts.2 <- sp::SpatialPoints(terra::crds(pts.1))
+  # myXY <- terra::crds(pts.1)
+  # PA.df <-
+
   #if(!file.exists()){
   pts.r <- terra::rasterize(x=pts.1, y=base.r, fun='length', background=0)
   pts.r <- (pts.r*(base.r))>0
-  pts.2 <- terra::as.points(pts.r); names(pts.2) <- 'lyr1'
-  #myResp <- pts.2[[1]]; # the presence/absences data for our species
-  pts.t <- which(pts.2$lyr1==1)
-  pts.f <- which(pts.2$lyr1==0)
-  pts.r <- sample(x=pts.f, size=length(pts.t))
-  pts.s <- pts.2[c(pts.t, pts.r)]
-  myResp <- pts.s$lyr1
-  myResp[myResp==0] <- NA # setting 'true absences' to NA
-  myXY <- terra::crds(pts.s)#myXY <- terra::crds(pts.2) # the XY coordinates of species data
+  pts.v <- terra::values(pts.r)
+  pts.t <- which(pts.v==1)
+  pts.f <- which(pts.v==0)
+  pts.s <- sample(x=pts.f, size=length(pts.t))
+  myResp <- pts.v[c(pts.t, pts.s)]; myResp[myResp==0] <- NA
+  myXY <- terra::xyFromCell(object=pts.r, cell=c(pts.t, pts.s))
 
-  PA.df <- as.data.frame(myResp); PA.df[is.na(PA.df)] <- FALSE
-  PA.fact <- sum(PA.df==F)/sum(myResp, na.rm=T)
-  PA.df$myResp[which(PA.df==F)[round((1:sum(myResp, na.rm=T))*PA.fact)]] <- TRUE
-  PA.df$myResp <- as.logical(PA.df$myResp)
+  # #pts.2 <- terra::as.points(pts.r); names(pts.2) <- 'lyr1'
+  # #myResp <- pts.2[[1]]; # the presence/absences data for our species
+  # pts.t <- which(pts.2$lyr1==1)
+  # pts.f <- which(pts.2$lyr1==0)
+  # pts.r <- sample(x=pts.f, size=length(pts.t))
+  # pts.3 <- pts.2[c(pts.t, pts.r)]
+  # myResp <- pts.3$lyr1
+  # myResp[myResp==0] <- NA # setting 'true absences' to NA
+  # myXY <- terra::crds(pts.3)#myXY <- terra::crds(pts.2) # the XY coordinates of species data
+  #
+  # PA.df <- as.data.frame(myResp); PA.df[is.na(PA.df)] <- FALSE
+  # PA.fact <- sum(PA.df==F)/sum(myResp, na.rm=T)
+  # PA.df$myResp[which(PA.df==F)[round((1:sum(myResp, na.rm=T))*PA.fact)]] <- TRUE
+  # PA.df$myResp <- as.logical(PA.df$myResp)
   #}
 
   #### 2.0 Run variable selection function to choose the ideal variables ####
@@ -65,9 +76,10 @@ run_SDM <- function(spname, domain=world(), res){
                                           resp.xy = myXY,
                                           resp.name = myName,
                                           PA.nb.rep = 1,
-                                          PA.strategy = 'user.defined', #'random',
-                                          #PA.nb.absences = sum(myResp, na.rm=T)
-                                          PA.table = PA.df)
+                                          PA.strategy = 'random', #, 'user.defined', #
+                                          PA.nb.absences = sum(myResp, na.rm=T)
+                                          #PA.table = PA.df
+                                          )
   # Notes on algorithm choices; CTA is redundant with Random Forest, FDA and SRE have relatively low performance
   myAlgos <- c('GAM', 'GBM', 'GLM', 'RF', 'ANN', 'MARS', 'MAXENT.Phillips')
   # Notes on evaluation methods: POD/SR/FR/BIAS is not useful, KAPPA, and TSS get similar results

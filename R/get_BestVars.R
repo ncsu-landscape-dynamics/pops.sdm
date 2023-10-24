@@ -12,11 +12,9 @@ get_BestVars <- function(envi, pts){
   pts.f <- which(pts$lyr1==0)
   #p.max <- 1000000-length(pts.t)
   #pts.r <- sample(x=pts.f, size=pmin(length(pts.f), p.max))
-  pts.r <- sample(x=pts.f, size=length(pts.t))
-  pts.s <- pts[c(pts.t, pts.r)]
-  myResp2 <- pts.s$lyr1
-  myResp2[myResp2==0] <- NA # setting 'true absences' to NA
-  myXY2 <- terra::crds(pts.s) # the XY coordinates of species data
+  pts.s <- sample(x=pts.f, size=length(pts.t))
+  myResp <- pts.v[c(pts.t, pts.s)]; myResp[myResp==0] <- NA
+  myXY <- terra::xyFromCell(object=envi, cell=c(pts.t, pts.s))
   myName2 <- 'test'
   nreps <- 1 #unnecessary since running full models yields same results, no extra reps needed
 
