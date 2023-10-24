@@ -8,8 +8,8 @@ get_BestVars <- function(envi, pts){
 
   envi2 <- raster::stack(envi$rast)
   envi.cv <- envi$clust
-  pts.t <- which(pts$lyr1==1)
-  pts.f <- which(pts$lyr1==0)
+  pts.t <- which(pts==1)
+  pts.f <- which(pts==0)
   #p.max <- 1000000-length(pts.t)
   #pts.r <- sample(x=pts.f, size=pmin(length(pts.f), p.max))
   pts.s <- sample(x=pts.f, size=length(pts.t))
