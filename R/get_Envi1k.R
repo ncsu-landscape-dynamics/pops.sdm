@@ -158,15 +158,15 @@ get_Envi1k <- function(bio=F, elev=F, gdd=F, lc=F, pop=F, ptime=F, rnr=F, soil=F
         names(lcvar) <- c('built', 'decid', 'everg', 'trees', 'shrub', 'grass', 'pastr', 'cropl', 'culti', 'wetld')
       }
       if(!all(c(file.exists(paste(lcpath, '\\nlcd_2019_1s_built_21_22_23_24.tif', sep=''),
-                           paste(lcpath, '\\nlcd_2019_1s_decid_41_43.tif', sep=''),
-                           paste(lcpath, '\\nlcd_2019_1s_everg_42_43.tif', sep=''),
-                           paste(lcpath, '\\nlcd_2019_1s_trees_41_42_43.tif', sep=''),
-                           paste(lcpath, '\\nlcd_2019_1s_shrub_52.tif', sep=''),
-                           paste(lcpath, '\\nlcd_2019_1s_grass_71.tif', sep=''),
-                           paste(lcpath, '\\nlcd_2019_1s_pastr_81.tif', sep=''),
-                           paste(lcpath, '\\nlcd_2019_1s_cropl_82.tif', sep=''),
-                           paste(lcpath, '\\nlcd_2019_1s_culti_81_82.tif', sep=''),
-                           paste(lcpath, '\\nlcd_2019_1s_wetld_90_95.tif', sep=''))))){
+                            paste(lcpath, '\\nlcd_2019_1s_decid_41_43.tif', sep=''),
+                            paste(lcpath, '\\nlcd_2019_1s_everg_42_43.tif', sep=''),
+                            paste(lcpath, '\\nlcd_2019_1s_trees_41_42_43.tif', sep=''),
+                            paste(lcpath, '\\nlcd_2019_1s_shrub_52.tif', sep=''),
+                            paste(lcpath, '\\nlcd_2019_1s_grass_71.tif', sep=''),
+                            paste(lcpath, '\\nlcd_2019_1s_pastr_81.tif', sep=''),
+                            paste(lcpath, '\\nlcd_2019_1s_cropl_82.tif', sep=''),
+                            paste(lcpath, '\\nlcd_2019_1s_culti_81_82.tif', sep=''),
+                            paste(lcpath, '\\nlcd_2019_1s_wetld_90_95.tif', sep=''))))){
 
         if(!file.exists(paste(lcpath, 'nlcd_2019_land_cover_l48_20210604_1s.tif', sep=''))){
           lc30 <- terra::rast(paste(lcpath, 'nlcd_2019_land_cover_l48_20210604.tif', sep=''))
@@ -213,19 +213,28 @@ get_Envi1k <- function(bio=F, elev=F, gdd=F, lc=F, pop=F, ptime=F, rnr=F, soil=F
       }
 
       if(res>33){
-        if(!file.exists(paste(lcpath, 'ncld_2019_', res, 'm.tif', sep=''))){
-          if(res==250){
-            lcagg <- terra::aggregate(lcvar, fact=7, fun='modal')
-            lcagg <- terra::project(lcagg, base.rast, method='near', threads=T)
+        if(res==100){
+          if(!file.exists(paste(lcpath, 'ncldvars_2019_3s.tif', sep=''))){
+            lcagg <- terra::aggregate(lcvar, fact=3, fun='modal')
+            terra::writeRaster(lcagg, paste(lcpath, 'ncldvars_2019_3s.tif', sep=''))
           }
-          if(res!=250){
-            lcagg <- terra::aggregate(lcvar, fact=(res/(100/3)), fun='modal')
+          if(file.exists(paste(lcpath, 'ncldvars_2019_3s.tif', sep=''))){
+            lc.var <- terra::rast(lcagg, paste(lcpath, 'ncldvars_2019_3s.tif', sep=''))
           }
-          terra::writeRaster(lcagg, paste(lcpath, 'ncld_2019_', res, 'm.tif', sep=''))
         }
-        if(file.exists(paste(lcpath, 'ncld_2019_', res, 'm.tif', sep=''))){
-          lcvar <- terra::rast(paste(lcpath, 'ncld_2019_', res, 'm.tif', sep=''))
-        }
+        # if(!file.exists(paste(lcpath, 'ncld_2019_', res, 'm.tif', sep=''))){
+        #   if(res==250){
+        #     lcagg <- terra::aggregate(lcvar, fact=7, fun='modal')
+        #     lcagg <- terra::project(lcagg, base.rast, method='near', threads=T)
+        #   }
+        #   if(res!=250){
+        #     lcagg <- terra::aggregate(lcvar, fact=(res/(100/3)), fun='modal')
+        #   }
+        #   terra::writeRaster(lcagg, paste(lcpath, 'ncld_2019_', res, 'm.tif', sep=''))
+        # }
+        # if(file.exists(paste(lcpath, 'ncld_2019_', res, 'm.tif', sep=''))){
+        #   lcvar <- terra::rast(paste(lcpath, 'ncld_2019_', res, 'm.tif', sep=''))
+        # }
       }
     }
     lccl <- data.frame(var=names(lcvar), cluster=NA)
