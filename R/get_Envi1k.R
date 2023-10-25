@@ -219,7 +219,7 @@ get_Envi1k <- function(bio=F, elev=F, gdd=F, lc=F, pop=F, ptime=F, rnr=F, soil=F
             terra::writeRaster(lcagg, paste(lcpath, 'ncldvars_2019_3s.tif', sep=''))
           }
           if(file.exists(paste(lcpath, 'ncldvars_2019_3s.tif', sep=''))){
-            lc.var <- terra::rast(lcagg, paste(lcpath, 'ncldvars_2019_3s.tif', sep=''))
+            lc.var <- terra::rast(paste(lcpath, 'ncldvars_2019_3s.tif', sep=''))
           }
         }
         # if(!file.exists(paste(lcpath, 'ncld_2019_', res, 'm.tif', sep=''))){
