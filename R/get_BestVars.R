@@ -4,17 +4,19 @@
 # require(terra)
 #' @export
 
-get_BestVars <- function(envi, pts){
+get_BestVars <- function(envi, pts, clust){
 
-  envi2 <- raster::stack(envi$rast)
-  envi.cv <- envi$clust
-  pts.t <- which(pts==1)
-  pts.f <- which(pts==0)
+  #if(class(envi.r)[1]=="SpatRaster"){envi2 <- raster::stack(envi$rast)}
+  envi2 <- envi
+  envi.cv <- clust
+  pts.v <- terra::values(pts.r)
+  pts.t <- which(pts.v==1)
+  pts.f <- which(pts.v==0)
   #p.max <- 1000000-length(pts.t)
   #pts.r <- sample(x=pts.f, size=pmin(length(pts.f), p.max))
   pts.s <- sample(x=pts.f, size=length(pts.t))
-  myResp2 <- pts.v[c(pts.t, pts.s)]; myResp[myResp==0] <- NA
-  myXY2 <- terra::xyFromCell(object=envi2, cell=c(pts.t, pts.s))
+  myResp <- pts.v[c(pts.t, pts.s)]; myResp[myResp==0] <- NA
+  myXY2 <- terra::xyFromCell(object=pts, cell=c(pts.t, pts.s))
   myName2 <- 'test'
   nreps <- 1 #unnecessary since running full models yields same results, no extra reps needed
 
@@ -25,7 +27,7 @@ get_BestVars <- function(envi, pts){
   # Running all algorithms at once is approximately 25% faster than running them separately.
   #algos <- list('SRE', 'CTA', 'FDA', 'GLM', 'GAM', 'MARS', 'MAXENT.Phillips', c('SRE', 'CTA', 'FDA', 'GLM', 'GAM', 'MARS', 'MAXENT.Phillips'))
   #names(algos) <- c('SRE', 'CTA', 'FDA', 'GLM', 'GAM',  'MARS', 'MAXENT.Phillips', 'ALL')
-  algos <- list(c('SRE', 'CTA', 'FDA', 'GLM', 'GAM', 'MARS', 'MAXENT.Phillips'))
+  algos <- list(c('CTA', 'FDA', 'GLM', 'GAM', 'MARS', 'MAXENT.Phillips'))
   names(algos) <- c('ALL')
   evals <- c('ACCURACY', 'CSI', 'ETS', 'ROC', 'TSS') #Notes on evals; Kappa similar to tss, bias/far/sr/pod not very useful,
 
@@ -41,14 +43,16 @@ get_BestVars <- function(envi, pts){
 
         k.test <- plyr::ldply(.data=k.names,
                               .fun=function(X){
-                                myExpl <- raster::stack(envi2[[X]], k.stack)
+                               # if(class(envi.r)[1]=="SpatRaster"){myExpl <- raster::stack(envi2[[X]], k.stack)}
+                               # if(class(envi.r)[1]=="data.frame"){myExpl <- raster::stack(envi2[[X]], k.stack)}
+                                myExpl <- data.frame(cbind(envi2[, X], NULL))
                                 PA.df <- as.data.frame(myResp2); PA.df[is.na(PA.df)] <- FALSE
                                 PA.fact <- sum(PA.df==F)/sum(myResp2, na.rm=T)
                                 PA.df$myResp2[which(PA.df==F)[round((1:sum(myResp2, na.rm=T))*PA.fact)]] <- TRUE
                                 PA.df$myResp2 <- as.logical(PA.df$myResp2)
 
                                 myOptions <- biomod2::BIOMOD_ModelingOptions('GLM'=list(test='none'))
-                                myData <- biomod2::BIOMOD_FormatingData(resp.var = myResp2,
+                                myData <- biomod2::BIOMOD_FormatingData(resp.var = myResp,
                                                                         expl.var = myExpl,
                                                                         resp.xy = myXY2,
                                                                         resp.name = myName2,
