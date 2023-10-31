@@ -88,7 +88,6 @@ get_Envi1k <- function(bio=F, elev=F, gdd=F, lc=F, pop=F, ptime=F, rnr=F, soil=F
         terra::writeRaster(g1, filename=gdpath)
       }
       if(file.exists(gdpath)){g1 <- terra::rast(gdpath)}
-
       if(res<1000){
         gdpath <- paste(geodir, 'USA\\gdd_base',tbase, '_', res, 'm.tif', sep='')
         if(!file.exists(gdpath)){
@@ -143,7 +142,6 @@ get_Envi1k <- function(bio=F, elev=F, gdd=F, lc=F, pop=F, ptime=F, rnr=F, soil=F
       #                      paste(lcpath, '\\nlcd_2019_1s_cropl_82.tif', sep=''),
       #                      paste(lcpath, '\\nlcd_2019_1s_culti_81_82.tif', sep=''),
       #                      paste(lcpath, '\\nlcd_2019_1s_wetld_90_95.tif', sep=''))))){
-      #
       #   built <- terra::rast(paste(lcpath, '\\nlcd_2019_1s_built_21_22_23_24.tif', sep=''))
       #   decid <- terra::rast(paste(lcpath, '\\nlcd_2019_1s_decid_41_43.tif', sep=''))
       #   everg <- terra::rast(paste(lcpath, '\\nlcd_2019_1s_everg_42_43.tif', sep=''))
@@ -167,7 +165,6 @@ get_Envi1k <- function(bio=F, elev=F, gdd=F, lc=F, pop=F, ptime=F, rnr=F, soil=F
       #                       paste(lcpath, '\\nlcd_2019_1s_cropl_82.tif', sep=''),
       #                       paste(lcpath, '\\nlcd_2019_1s_culti_81_82.tif', sep=''),
       #                       paste(lcpath, '\\nlcd_2019_1s_wetld_90_95.tif', sep=''))))){
-      #
       if(!file.exists(paste(lcpath, 'nlcd_2019_land_cover_l48_20210604_1s.tif', sep=''))){
         lc30 <- terra::rast(paste(lcpath, 'nlcd_2019_land_cover_l48_20210604.tif', sep=''))
         lcbase <- pops.sdm::rasterbase(res=33)
@@ -180,9 +177,7 @@ get_Envi1k <- function(bio=F, elev=F, gdd=F, lc=F, pop=F, ptime=F, rnr=F, soil=F
       if(file.exists(paste(geodir, 'USA\\landcover\\', 'nlcd_2019_land_cover_l48_20210604_1s.tif', sep=''))){
         lcvar <- terra::rast(paste(lcpath, 'nlcd_2019_land_cover_l48_20210604_1s.tif', sep=''))
       }
-      #
       #   vars <- c('built', 'decid', 'everg', 'trees', 'shrub', 'grass', 'pastr', 'cropl', 'culti', 'wetld')
-      #
       #   lc.sum <- function(lc, var){
       #     if(var=='built'){vals <- c(21, 22, 23, 24)}
       #     if(var=='decid'){vals <- c(41, 43)}
@@ -195,23 +190,18 @@ get_Envi1k <- function(bio=F, elev=F, gdd=F, lc=F, pop=F, ptime=F, rnr=F, soil=F
       #     if(var=='culti'){vals <- c(81, 82)}
       #     if(var=='wetld'){vals <- c(90, 95)}
       #     lc.vals <- lc==vals
-      #
       #     if(var%in%c('built', 'decid', 'everg')){
       #       if(var=='built'){weights <- c(.25, .5, .75, 1)}
       #       if(var%in%c('decid', 'everg')){weights <- c(1, .5)}
       #       lc.vals <- (lc.vals)*weights}
       #     lc.var <- terra::app(lc.vals, fun='sum')
-      #
       #     terra::writeRaster(lc.var, paste('Q:\\Shared drives\\Data\\Raster\\USA\\landcover\\',
       #                                      paste('nlcd_2019_1s', var, paste(vals, collapse='_'), sep='_'),
       #                                      '.tif', sep=''))
       #   }
-      #
       #   i <- 1
       #   for(i in i:length(vars)){lc.sum(lc, var=vars[[i]])}
-      #
       # }
-
       if(res>33){
         if(res==100){
           if(!file.exists(paste(lcpath, 'ncldvars_2019_3s.tif', sep=''))){
