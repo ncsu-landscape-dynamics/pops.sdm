@@ -3,7 +3,7 @@
 # require(parallel)
 #' @export
 
-get_Envi1k <- function(bio=F, elev=F, gdd=F, lc=F, pop=F, ptime=F, rnr=F, soil=F, tbase=5, res=1000){
+get_Envi <- function(bio=F, elev=F, gdd=F, lc=F, pop=F, ptime=F, rnr=F, soil=F, tbase=5, res=1000){
 
   geodir <- 'Q:\\Shared drives\\Data\\Raster\\'
   base.rast <- pops.sdm::rasterbase(res=res)
