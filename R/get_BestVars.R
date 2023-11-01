@@ -40,10 +40,13 @@ get_BestVars <- function(envi, pts, clust){
         k.test <- plyr::ldply(.data=k.names,
                               .fun=function(X){
 
-                                myExpl <- raster::extract(raster::stack(envi2[[X]], k.stack), myXY)
+                                myExtr <- raster::extract(raster::stack(envi2[[X]], k.stack), myXY, df=T)
+                                myExpl <- data.frame(myExtr[, 2:length(myExtr)]); colnames(myExpl) <- colnames(myExtr)[2:length(myExtr)]
+
                                 if("nlcd_2019_land_cover_l48_20210604"%in%colnames(myExpl)){
                                   myExpl$nlcd_2019_land_cover_l48_20210604 <- as.factor(myExpl$nlcd_2019_land_cover_l48_20210604)
                                 }
+
                                 PA.df <- as.data.frame(myResp); PA.df[is.na(PA.df)] <- FALSE
                                 PA.fact <- sum(PA.df==F)/sum(myResp, na.rm=T)
                                 PA.df$myResp[which(PA.df==F)[round((1:sum(myResp, na.rm=T))*PA.fact)]] <- TRUE
