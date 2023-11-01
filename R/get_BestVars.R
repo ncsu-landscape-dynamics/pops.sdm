@@ -7,18 +7,15 @@
 get_BestVars <- function(envi, pts, clust){
 
   #if(class(envi.r)[1]=="SpatRaster"){envi2 <- raster::stack(envi$rast)}
-  envi2 <- envi
-  envi.cv <- clust
-  pts.v <- terra::values(pts.r)
+  envi2 <- raster::stack(envi); envi.cv <- clust
+  pts.v <- terra::values(pts)
   pts.t <- which(pts.v==1)
   pts.f <- which(pts.v==0)
-  #p.max <- 1000000-length(pts.t)
-  #pts.r <- sample(x=pts.f, size=pmin(length(pts.f), p.max))
   pts.s <- sample(x=pts.f, size=length(pts.t))
   myResp <- pts.v[c(pts.t, pts.s)]; myResp[myResp==0] <- NA
-  myXY2 <- terra::xyFromCell(object=pts, cell=c(pts.t, pts.s))
-  myName2 <- 'test'
+  myXY <- terra::xyFromCell(object=pts.r, cell=c(pts.t, pts.s))
   nreps <- 1 #unnecessary since running full models yields same results, no extra reps needed
+  #p.max <- 1000000-length(pts.t) #pts.r <- sample(x=pts.f, size=pmin(length(pts.f), p.max))
 
   # Notes on algorithm selection. GBM and ANN do not work with all data used/no split.
   # SRE, CTA, FDA, GLM, GAM, RF, and MARS are comparable in speed (SRE fastest, MARS slowest by about 25%, rest in respective order)
@@ -27,8 +24,7 @@ get_BestVars <- function(envi, pts, clust){
   # Running all algorithms at once is approximately 25% faster than running them separately.
   #algos <- list('SRE', 'CTA', 'FDA', 'GLM', 'GAM', 'MARS', 'MAXENT.Phillips', c('SRE', 'CTA', 'FDA', 'GLM', 'GAM', 'MARS', 'MAXENT.Phillips'))
   #names(algos) <- c('SRE', 'CTA', 'FDA', 'GLM', 'GAM',  'MARS', 'MAXENT.Phillips', 'ALL')
-  algos <- list(c('CTA', 'FDA', 'GLM', 'GAM', 'MARS', 'MAXENT.Phillips'))
-  names(algos) <- c('ALL')
+  algos <- list(c('CTA', 'FDA', 'GLM', 'GAM', 'MARS', 'MAXENT.Phillips')); names(algos) <- c('ALL')
   evals <- c('ACCURACY', 'CSI', 'ETS', 'ROC', 'TSS') #Notes on evals; Kappa similar to tss, bias/far/sr/pod not very useful,
 
   i <- 1; t.list <- data.frame('algos'=names(algos), 'time'=rep(NA, length(algos)))
@@ -43,19 +39,21 @@ get_BestVars <- function(envi, pts, clust){
 
         k.test <- plyr::ldply(.data=k.names,
                               .fun=function(X){
-                               # if(class(envi.r)[1]=="SpatRaster"){myExpl <- raster::stack(envi2[[X]], k.stack)}
-                               # if(class(envi.r)[1]=="data.frame"){myExpl <- raster::stack(envi2[[X]], k.stack)}
-                                myExpl <- data.frame(cbind(envi2[, X], NULL))
-                                PA.df <- as.data.frame(myResp2); PA.df[is.na(PA.df)] <- FALSE
-                                PA.fact <- sum(PA.df==F)/sum(myResp2, na.rm=T)
-                                PA.df$myResp2[which(PA.df==F)[round((1:sum(myResp2, na.rm=T))*PA.fact)]] <- TRUE
-                                PA.df$myResp2 <- as.logical(PA.df$myResp2)
+
+                                myExpl <- raster::extract(raster::stack(envi2[[X]], k.stack), myXY)
+                                if("nlcd_2019_land_cover_l48_20210604"%in%colnames(myExpl)){
+                                  myExpl$nlcd_2019_land_cover_l48_20210604 <- as.factor(myExpl$nlcd_2019_land_cover_l48_20210604)
+                                }
+                                PA.df <- as.data.frame(myResp); PA.df[is.na(PA.df)] <- FALSE
+                                PA.fact <- sum(PA.df==F)/sum(myResp, na.rm=T)
+                                PA.df$myResp[which(PA.df==F)[round((1:sum(myResp, na.rm=T))*PA.fact)]] <- TRUE
+                                PA.df$myResp <- as.logical(PA.df$myResp)
 
                                 myOptions <- biomod2::BIOMOD_ModelingOptions('GLM'=list(test='none'))
                                 myData <- biomod2::BIOMOD_FormatingData(resp.var = myResp,
                                                                         expl.var = myExpl,
-                                                                        resp.xy = myXY2,
-                                                                        resp.name = myName2,
+                                                                        resp.xy = myXY,
+                                                                        resp.name = 'test',
                                                                         PA.nb.rep = 1,
                                                                         PA.strategy = 'user.defined',
                                                                         PA.table = PA.df) #PA.user.table = PA.df)
