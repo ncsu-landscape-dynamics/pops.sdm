@@ -94,8 +94,8 @@ get_Envi <- function(bio=F, elev=F, gdd=F, lc=F, pop=F, ptime=F, rnr=F, soil=F, 
             aspect4 <- terra::rast(paste(geodir, 'USA\\elevation\\aspect4_1s.tif', sep=''))
             aspect8 <- terra::rast(paste(geodir, 'USA\\elevation\\aspect8_1s.tif', sep=''))
           }
-          elevvar <- c(dem.1, slope, aspect4, aspect8)
         }
+        elevvar <- c(dem.1, slope, aspect4, aspect8)
       }
     }
     elevcl <- data.frame(var=names(elevvar), cluster='Elevation 1')
