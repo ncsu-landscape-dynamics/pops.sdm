@@ -71,7 +71,33 @@ get_Envi <- function(bio=F, elev=F, gdd=F, lc=F, pop=F, ptime=F, rnr=F, soil=F, 
       elevvar <- geodata::elevation_global(res=.5, path=paste(geodir, 'Global\\',sep=''))
       names(elevvar) <- 'Elevation'
     }
-    #   if(res<1000){}
+    if(res<1000){
+      if(res==33){
+        if(!file.exists(paste(geodir, 'USA\\elevation\\dem_1s.tif', sep=''))){
+          dem <- terra::rast('C:\\Users\\bjselige\\Downloads\\l48_srtm_dem_30m.tif')
+          base.1s <- pops.sdm::rasterbase(res=res)
+          dem.1 <- terra::project(dem, base.1s, method='bilinear', threads=T)
+          terra::writeRaster(dem.1, 'C:\\Users\\bjselige\\Desktop\\dem.1s.tif')
+        }
+        if(file.exists(paste(geodir, 'USA\\elevation\\dem_1s.tif', sep=''))){
+          dem.1 <- terra::rast(paste(geodir, 'USA\\elevation\\dem_1s.tif', sep=''))
+          if(!file.exists(paste(geodir, 'USA\\elevation\\aspect8_1s.tif', sep=''))){
+            slope <- terra::terrain(dem.1, v='slope', unit='degrees', neighbors=8)
+            aspect4 <- terra::terrain(dem.1, v='aspect', unit='degrees', neighbors=4)
+            aspect8 <- terra::terrain(dem.1, v='aspect', unit='degrees', neighbors=8)
+            terra::writeRaster(round(slope, digits=1), paste(geodir, 'USA\\elevation\\slope_1s.tif', sep=''))
+            terra::writeRaster(round(aspect4+90, digits=1), paste(geodir, 'USA\\elevation\\aspect4_1s.tif', sep=''))
+            terra::writeRaster(round(aspect8, digits=1), paste(geodir, 'USA\\elevation\\aspect8_1s.tif', sep=''))
+          }
+          if(file.exists(paste(geodir, 'USA\\elevation\\aspect8_1s.tif', sep=''))){
+            slope <- terra::rast(paste(geodir, 'USA\\elevation\\slope_1s.tif', sep=''))
+            aspect4 <- terra::rast(paste(geodir, 'USA\\elevation\\aspect4_1s.tif', sep=''))
+            aspect8 <- terra::rast(paste(geodir, 'USA\\elevation\\aspect8_1s.tif', sep=''))
+          }
+          elevvar <- c(dem.1, slope, aspect4, aspect8)
+        }
+      }
+    }
     elevcl <- data.frame(var=names(elevvar), cluster='Elevation 1')
   }
 
