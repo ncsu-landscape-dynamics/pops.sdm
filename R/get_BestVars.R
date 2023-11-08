@@ -40,7 +40,7 @@ get_BestVars <- function(envi, pts, clust){
         k.test <- plyr::ldply(.data=k.names,
                               .fun=function(X){
 
-                                myExtr <- terra::extract(c(envi2[[X]], k.stack), myXY)
+                                myExtr <- data.frame(terra::extract(c(envi2[[X]], k.stack), myXY))
 
                                 if("nlcd_2019_land_cover_l48_20210604"%in%colnames(myExtr)){
                                   myExtr$nlcd_2019_land_cover_l48_20210604 <- as.factor(myExtr$nlcd_2019_land_cover_l48_20210604)

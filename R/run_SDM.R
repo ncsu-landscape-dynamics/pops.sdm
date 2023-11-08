@@ -60,7 +60,7 @@ run_SDM <- function(spname, domain=world(), res){
 
   #### 3.0 Define options and parameters for modeling ####
   #mod.dir <- 'C:\Users\bjselige\Documents\pops.sdm\notholithocarpus.densiflorus'
-  myExpl <- terra::extract(envi.best, myXY)
+  myExpl <- data.frame(terra::extract(envi.best, myXY))
   if("nlcd_2019_land_cover_l48_20210604"%in%colnames(myExpl)){
     myExpl$nlcd_2019_land_cover_l48_20210604 <- as.factor(myExpl$nlcd_2019_land_cover_l48_20210604)
   }
