@@ -21,7 +21,7 @@ run_SDM <- function(spname, domain=world(), res){
 
 
   #### 1.1 Gather Environmental Data ####
-  envi.vars <- pops.sdm::get_Envi(bio=T, lc=T, ptime=F, soil=F, pop=F, res=res)
+  envi.vars <- pops.sdm::get_Envi(bio=T, lc=T, ptime=F, soil=F, pop=F, elev=T, res=res)
   base.r <- terra::crop(x=pops.sdm::rasterbase(res=res), y=domain, mask=T)
 
   if(res>100){envi.r <- terra::crop(x=envi.vars$rast, y=domain, mask=T); envi.r <- envi.r*base.r}

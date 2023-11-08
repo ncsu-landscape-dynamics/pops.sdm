@@ -73,7 +73,7 @@ get_BestVars <- function(envi, pts, clust){
                                                                      # scale.models = F, #experimental don't use
                                                                      do.full.models = F,
                                                                      # seed.val=1991,
-                                                                     modeling.id = paste(myName2,"Modeling",sep=""))
+                                                                     modeling.id = paste('test',"Modeling",sep=""))
 
                                 # Evaluation
                                 options(digits = 22)
