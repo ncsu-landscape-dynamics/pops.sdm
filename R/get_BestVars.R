@@ -7,7 +7,7 @@
 get_BestVars <- function(envi, pts, clust){
 
   #if(class(envi.r)[1]=="SpatRaster"){envi2 <- raster::stack(envi$rast)}
-  envi2 <- raster::stack(envi); envi.cv <- clust
+  envi2 <- envi; envi.cv <- clust
   pts.v <- terra::values(pts)
   pts.t <- which(pts.v==1)
   pts.f <- which(pts.v==0)
@@ -40,11 +40,10 @@ get_BestVars <- function(envi, pts, clust){
         k.test <- plyr::ldply(.data=k.names,
                               .fun=function(X){
 
-                                myExtr <- raster::extract(raster::stack(envi2[[X]], k.stack), myXY, df=T)
-                                myExpl <- data.frame(myExtr[, 2:length(myExtr)]); colnames(myExpl) <- colnames(myExtr)[2:length(myExtr)]
+                                myExtr <- terra::extract(c(envi2[[X]], k.stack), myXY)
 
-                                if("nlcd_2019_land_cover_l48_20210604"%in%colnames(myExpl)){
-                                  myExpl$nlcd_2019_land_cover_l48_20210604 <- as.factor(myExpl$nlcd_2019_land_cover_l48_20210604)
+                                if("nlcd_2019_land_cover_l48_20210604"%in%colnames(myExtr)){
+                                  myExtr$nlcd_2019_land_cover_l48_20210604 <- as.factor(myExtr$nlcd_2019_land_cover_l48_20210604)
                                 }
 
                                 PA.df <- as.data.frame(myResp); PA.df[is.na(PA.df)] <- FALSE
@@ -54,31 +53,29 @@ get_BestVars <- function(envi, pts, clust){
 
                                 myOptions <- biomod2::BIOMOD_ModelingOptions('GLM'=list(test='none'))
                                 myData <- biomod2::BIOMOD_FormatingData(resp.var = myResp,
-                                                                        expl.var = myExpl,
+                                                                        expl.var = myExtr,
                                                                         resp.xy = myXY,
                                                                         resp.name = 'test',
                                                                         PA.nb.rep = 1,
                                                                         PA.strategy = 'user.defined',
-                                                                        PA.table = PA.df) #PA.user.table = PA.df)
+                                                                        PA.table = PA.df)
 
                                 # 3. Computing the models
                                 myModels <- biomod2::BIOMOD_Modeling(data = myData, #bm.format = myData,
                                                                      models.options = myOptions, #bm.options = myOptions,
                                                                      models = i.algo,
                                                                      NbRunEval = 1, #nb.rep = 1, #number of runs
-                                                                     DataSplit = 100, #data.split.perc = 100, #50,
-                                                                     # var.import = 0,
+                                                                     DataSplit = 100,
                                                                      models.eval.meth = evals, # metric.eval = c('ROC', 'TSS'),
                                                                      # save.output = T, # recommended to leave true
                                                                      # scale.models = F, #experimental don't use
                                                                      do.full.models = F,
-                                                                     # seed.val=1991,
                                                                      modeling.id = paste('test',"Modeling",sep=""))
 
                                 # Evaluation
                                 options(digits = 22)
-                                myEval <- biomod2::get_evaluations(myModels) # get all models evaluation
-                                eval.v <- c(myEval[evals,"Testing.data",,,]) #myEval$calibration[myEval$metric.eval%in%c('ROC', 'TSS')]#eval.v <- c(myEval[c('ROC','TSS'),"Testing.data",,,])
+                                myEval <- biomod2::get_evaluations(myModels)
+                                eval.v <- c(myEval[evals,"Testing.data",,,])
                                 return(mean(eval.v))
                               })
         row.names(k.test) <- k.names
@@ -91,7 +88,7 @@ get_BestVars <- function(envi, pts, clust){
         k.score <- k.out$score[which.max(k.out$score)]
         k.clust <- k.out[k.var, 'clust']
         k.envi <- envi2[[k.var]]
-        k.stack <- raster::stack(k.envi, k.stack)
+        k.stack <- c(k.envi, k.stack)
         k.list[[k]] <- list('score'=k.score, 'stack'=k.stack)
 
         # this reduces the number of variables in each cluster to the top 2 (redux var) most important
@@ -132,6 +129,6 @@ get_BestVars <- function(envi, pts, clust){
   })
 
   i.d2 <- i.d2[order(i.d2$score, decreasing=T),];  i.d2 <- i.d2[1:max(envi.cv),]
-  i.stack <- raster::stack(envi2[[i.d2[1:max(envi.cv),'var'][!grepl('NA_',i.d2[1:max(envi.cv),'var'])]]])
+  i.stack <- c(envi2[[i.d2[1:max(envi.cv),'var'][!grepl('NA_',i.d2[1:max(envi.cv),'var'])]]])
   return(i.stack); options(digits=3)
 }
