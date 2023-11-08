@@ -81,21 +81,21 @@ get_Envi <- function(bio=F, elev=F, gdd=F, lc=F, pop=F, ptime=F, rnr=F, soil=F, 
         }
         if(file.exists(paste(geodir, 'USA\\elevation\\dem_1s.tif', sep=''))){
           dem.1 <- terra::rast(paste(geodir, 'USA\\elevation\\dem_1s.tif', sep=''))
-          if(!file.exists(paste(geodir, 'USA\\elevation\\aspect8_1s.tif', sep=''))){
+          if(!file.exists(paste(geodir, 'USA\\elevation\\aspect4_1s.tif', sep=''))){
             slope <- terra::terrain(dem.1, v='slope', unit='degrees', neighbors=8)
             aspect4 <- terra::terrain(dem.1, v='aspect', unit='degrees', neighbors=4)
-            aspect8 <- terra::terrain(dem.1, v='aspect', unit='degrees', neighbors=8)
+            #aspect8 <- terra::terrain(dem.1, v='aspect', unit='degrees', neighbors=8)
             terra::writeRaster(round(slope, digits=1), paste(geodir, 'USA\\elevation\\slope_1s.tif', sep=''))
             terra::writeRaster(round(aspect4+90, digits=1), paste(geodir, 'USA\\elevation\\aspect4_1s.tif', sep=''))
-            terra::writeRaster(round(aspect8, digits=1), paste(geodir, 'USA\\elevation\\aspect8_1s.tif', sep=''))
+            #terra::writeRaster(round(aspect8, digits=1), paste(geodir, 'USA\\elevation\\aspect8_1s.tif', sep=''))
           }
-          if(file.exists(paste(geodir, 'USA\\elevation\\aspect8_1s.tif', sep=''))){
+          if(file.exists(paste(geodir, 'USA\\elevation\\aspect4_1s.tif', sep=''))){
             slope <- terra::rast(paste(geodir, 'USA\\elevation\\slope_1s.tif', sep=''))
             aspect4 <- terra::rast(paste(geodir, 'USA\\elevation\\aspect4_1s.tif', sep=''))
-            aspect8 <- terra::rast(paste(geodir, 'USA\\elevation\\aspect8_1s.tif', sep=''))
+            #aspect8 <- terra::rast(paste(geodir, 'USA\\elevation\\aspect8_1s.tif', sep=''))
           }
         }
-        elevvar <- c(dem.1, slope, aspect4, aspect8)
+        elevvar <- c(dem.1, slope, aspect4)#, aspect8)
       }
     }
     elevcl <- data.frame(var=names(elevvar), cluster='Elevation 1')
