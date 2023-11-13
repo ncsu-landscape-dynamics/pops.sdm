@@ -88,7 +88,12 @@ get_Envi <- function(bio=F, elev=F, gdd=F, lc=F, pop=F, ptime=F, rnr=F, soil=F, 
           shd.1s <- terra::project(shd, base.1s, method='bilinear', threads=T)
           terra::writeRaster(shd.1s, 'D:\\hillshade_1s.tif',overwrite=T)
         }
-
+        if(file.exists(paste(geodir, 'USA\\elevation\\elevation_1s.tif', sep=''))){
+          dem.1 <- terra::rast('C:\\Users\\bjselige\\Desktop\\elevation_1s.tif')
+        }
+        if(!file.exists(paste(geodir, 'USA\\elevation\\hillshade_1s.tif', sep=''))){
+         shd.1s <- terra::rast('D:\\hillshade_1s.tif',overwrite=T)
+        }
         # if(file.exists(paste(geodir, 'USA\\elevation\\dem_1s.tif', sep=''))){
         #   dem.1 <- terra::rast(paste(geodir, 'USA\\elevation\\dem_1s.tif', sep=''))
         #   if(!file.exists(paste(geodir, 'USA\\elevation\\aspect4_1s.tif', sep=''))){
@@ -105,7 +110,7 @@ get_Envi <- function(bio=F, elev=F, gdd=F, lc=F, pop=F, ptime=F, rnr=F, soil=F, 
         #     #aspect8 <- terra::rast(paste(geodir, 'USA\\elevation\\aspect8_1s.tif', sep=''))
         #   }
         # }
-        elevvar <- c(dem.1, slope, aspect4)#, aspect8)
+        elevvar <- c(dem.1, shd.1s)#, aspect8)
       }
     }
     elevcl <- data.frame(var=names(elevvar), cluster='Elevation 1')
