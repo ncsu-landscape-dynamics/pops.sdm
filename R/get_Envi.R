@@ -73,26 +73,26 @@ get_Envi <- function(bio=F, elev=F, gdd=F, lc=F, pop=F, ptime=F, rnr=F, soil=F, 
     }
     if(res<1000){
       if(res==33){
-        if(!file.exists(paste(geodir, 'USA\\elevation\\elevation_1s.tif', sep=''))){
+        if(!file.exists(paste(geodir, 'USA\\elevation\\dem_1s.tif', sep=''))){
           dem <- terra::rast('C:\\Users\\bjselige\\Downloads\\l48_srtm_dem_30m.tif')
           base.1s <- pops.sdm::rasterbase(res=res)
           dem.1 <- terra::project(dem, base.1s, method='bilinear', threads=T)
           terra::writeRaster(dem.1, 'C:\\Users\\bjselige\\Desktop\\elevation_1s.tif')
         }
-        if(!file.exists(paste(geodir, 'USA\\elevation\\hillshade_1s.tif', sep=''))){
+        if(!file.exists('D:\\hillshade_1s.tif')){
           dem <- terra::rast('C:\\Users\\bjselige\\Downloads\\l48_srtm_dem_30m.tif')
           slp <- terra::terrain(dem, v='slope', unit='radians', neighbors=8)
           asp <- terra::terrain(dem, v='aspect', unit='radians', neighbors=4)
           shd <- terra::shade(slp, asp, direction=180)
           base.1s <- pops.sdm::rasterbase(res=res)
           shd.1s <- terra::project(shd, base.1s, method='bilinear', threads=T)
-          terra::writeRaster(shd.1s, 'D:\\hillshade_1s.tif',overwrite=T)
+          terra::writeRaster(shd.1s, 'D:\\hillshade_1s.tif', overwrite=T)
         }
-        if(file.exists(paste(geodir, 'USA\\elevation\\elevation_1s.tif', sep=''))){
-          dem.1 <- terra::rast('C:\\Users\\bjselige\\Desktop\\elevation_1s.tif')
+        if(file.exists(paste(geodir, 'USA\\elevation\\dem_1s.tif', sep=''))){
+          dem.1 <- terra::rast(paste(geodir, 'USA\\elevation\\dem_1s.tif', sep=''))
         }
-        if(!file.exists(paste(geodir, 'USA\\elevation\\hillshade_1s.tif', sep=''))){
-         shd.1s <- terra::rast('D:\\hillshade_1s.tif',overwrite=T)
+        if(file.exists('D:\\hillshade_1s.tif')){
+         shd.1s <- terra::rast('D:\\hillshade_1s.tif')
         }
         # if(file.exists(paste(geodir, 'USA\\elevation\\dem_1s.tif', sep=''))){
         #   dem.1 <- terra::rast(paste(geodir, 'USA\\elevation\\dem_1s.tif', sep=''))
@@ -110,10 +110,10 @@ get_Envi <- function(bio=F, elev=F, gdd=F, lc=F, pop=F, ptime=F, rnr=F, soil=F, 
         #     #aspect8 <- terra::rast(paste(geodir, 'USA\\elevation\\aspect8_1s.tif', sep=''))
         #   }
         # }
-        elevvar <- c(dem.1, shd.1s)#, aspect8)
+        elevvar <- c(dem.1, shd.1s)
       }
     }
-    elevcl <- data.frame(var=names(elevvar), cluster='Elevation 1')
+    elevcl <- data.frame(var=names(elevvar), cluster=c('Elevation 1', 'Elevation 2'))
   }
 
   if(gdd==T){
