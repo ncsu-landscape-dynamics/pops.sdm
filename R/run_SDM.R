@@ -26,13 +26,13 @@ run_SDM <- function(spname, domain=world(), res){
 
   if(res>100){envi.r <- terra::crop(x=envi.vars$rast, y=domain, mask=T); envi.r <- envi.r*base.r}
   if(res<=100){
-    if(!file.exists(paste(dir, '/envi.', terra::nrow(base.r), terra::ncol(base.r), terra::nlyr(envi.vars$rast), '.tif', sep=''))){
+    if(!file.exists(paste(dir, '/envi/envi.', terra::nrow(base.r), terra::ncol(base.r), terra::nlyr(envi.vars$rast), '.tif', sep=''))){
       envi.r <- terra::crop(x=envi.vars$rast, y=domain, mask=T)
       envi.r <- envi.r*base.r
-      terra::writeRaster(envi.r, paste(dir, '/envi.', terra::nrow(base.r), terra::ncol(base.r), terra::nlyr(envi.vars$rast), '.tif', sep=''))
+      terra::writeRaster(envi.r, paste(dir, '/envi/envi.', terra::nrow(base.r), terra::ncol(base.r), terra::nlyr(envi.vars$rast), '.tif', sep=''))
     }
-    if(file.exists(paste(dir, '/envi.', terra::nrow(base.r), terra::ncol(base.r), terra::nlyr(envi.vars$rast), '.tif', sep=''))){
-      envi.r <- terra::rast(paste(dir, '/envi.', terra::nrow(base.r), terra::ncol(base.r), terra::nlyr(envi.vars$rast), '.tif', sep=''))
+    if(file.exists(paste(dir, '/envi/envi.', terra::nrow(base.r), terra::ncol(base.r), terra::nlyr(envi.vars$rast), '.tif', sep=''))){
+      envi.r <- terra::rast(paste(dir, '/envi/envi.', terra::nrow(base.r), terra::ncol(base.r), terra::nlyr(envi.vars$rast), '.tif', sep=''))
     }
   }
 
@@ -48,19 +48,19 @@ run_SDM <- function(spname, domain=world(), res){
   myXY <- terra::xyFromCell(object=pts.r, cell=c(pts.t, pts.s))
 
   #### 2.0 Run variable selection function to choose the ideal variables ####
-  if(!file.exists(paste(dir, '/envi.best', terra::nrow(base.r), terra::ncol(base.r), terra::nlyr(envi.vars$rast), '.tif', sep=''))){
+  if(!file.exists(paste(dir, '/envi/envi.best', terra::nrow(base.r), terra::ncol(base.r), terra::nlyr(envi.vars$rast), '.tif', sep=''))){
     envi.best <- pops.sdm::get_BestVars(envi=envi.r, pts=pts.r, clust=envi.vars$clust)
-    terra::writeRaster(envi.best, paste(dir, '/envi.best', terra::nrow(base.r), terra::ncol(base.r), terra::nlyr(envi.vars$rast), '.tif', sep=''))
+    terra::writeRaster(envi.best, paste(dir, '/envi/envi.best', terra::nrow(base.r), terra::ncol(base.r), terra::nlyr(envi.vars$rast), '.tif', sep=''))
   }
 
-  if(file.exists(paste(dir, '/envi.best', terra::nrow(base.r), terra::ncol(base.r), terra::nlyr(envi.vars$rast), '.tif', sep=''))){
-    envi.best <- raster::stack(terra::rast(paste(dir, '/envi.best', terra::nrow(base.r), terra::ncol(base.r), terra::nlyr(envi.vars$rast), '.tif', sep='')))
+  if(file.exists(paste(dir, '/envi/envi.best', terra::nrow(base.r), terra::ncol(base.r), terra::nlyr(envi.vars$rast), '.tif', sep=''))){
+    envi.best <- raster::stack(terra::rast(paste(dir, '/envi/envi.best', terra::nrow(base.r), terra::ncol(base.r), terra::nlyr(envi.vars$rast), '.tif', sep='')))
   }
 
 
   #### 3.0 Define options and parameters for modeling ####
   #mod.dir <- 'C:\Users\bjselige\Documents\pops.sdm\notholithocarpus.densiflorus'
-  myExpl <- data.frame(terra::extract(envi.best, myXY))
+  myExpl <- terra::extract(envi.best, myXY)
   if("nlcd_2019_land_cover_l48_20210604"%in%colnames(myExpl)){
     myExpl$nlcd_2019_land_cover_l48_20210604 <- as.factor(myExpl$nlcd_2019_land_cover_l48_20210604)
   }
@@ -80,21 +80,21 @@ run_SDM <- function(spname, domain=world(), res){
 
 
   #### 4.0 Run and evaluate the models ####
-  myModels <- biomod2::BIOMOD_Modeling(data = myData,
+  myModels <- biomod2::BIOMOD_Modeling(bm.format = myData,
                                        modeling.id = paste(myName,"AllModels",sep=""),
                                        models = myAlgos,
-                                       models.options = myOptions,
-                                       NbRunEval = 1, #3, #number of runs
-                                       DataSplit = 80,
-                                       models.eval.meth = myEvals,
-                                       VarImport = 1,
-                                       SaveObj = T,
+                                       bm.options = myOptions,
+                                       CV.nb.rep = 1, #3, #number of runs
+                                       data.split.perc = 80,
+                                       metric.eval = myEvals,
+                                       var.import = 1,
+                                       #SaveObj = T,
                                        do.full.models = F) # use this option if you don't want a data split
   myEval <- biomod2::get_evaluations(myModels) # get all models evaluation
 
 
   #### 5.0 projection over the globe under current conditions ####
-  myProj <- biomod2::BIOMOD_Projection(modeling.output = myModels,
+  myProj <- biomod2::BIOMOD_Projection(bm.mod = myModels,
                                        new.env = envi.best,
                                        proj.name = 'current',
                                        #compress = 'xz',

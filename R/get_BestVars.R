@@ -12,10 +12,20 @@ get_BestVars <- function(envi, pts, clust){
   pts.t <- which(pts.v==1)
   pts.f <- which(pts.v==0)
   pts.s <- sample(x=pts.f, size=length(pts.t))
-  myResp <- pts.v[c(pts.t, pts.s)]; myResp[myResp==0] <- NA
-  myXY <- terra::xyFromCell(object=pts.r, cell=c(pts.t, pts.s))
+  myResp <- pts.v[pts.t]#; myResp[myResp==0] <- NA
+  #myXY <- terra::xyFromCell(object=pts.r, cell=c(pts.t, pts.s))
+  myXY <- terra::xyFromCell(object=pts.r, cell=pts.t)
+  myPA <- terra::xyFromCell(object=pts.r, cell=pts.s)
   nreps <- 1 #unnecessary since running full models yields same results, no extra reps needed
   #p.max <- 1000000-length(pts.t) #pts.r <- sample(x=pts.f, size=pmin(length(pts.f), p.max))
+
+  PA.df <- as.data.frame(myPA)
+
+  # PA.df <- as.data.frame(myResp); PA.df[is.na(PA.df)] <- FALSE
+  # PA.fact <- sum(PA.df==F)/sum(myResp, na.rm=T)
+  # PA.df$myResp[which(PA.df==F)[round((1:sum(myResp, na.rm=T))*PA.fact)]] <- TRUE
+  # PA.df$myResp <- as.logical(PA.df$myResp)
+
 
   # Notes on algorithm selection. GBM and ANN do not work with all data used/no split.
   # SRE, CTA, FDA, GLM, GAM, RF, and MARS are comparable in speed (SRE fastest, MARS slowest by about 25%, rest in respective order)
@@ -24,7 +34,7 @@ get_BestVars <- function(envi, pts, clust){
   # Running all algorithms at once is approximately 25% faster than running them separately.
   #algos <- list('SRE', 'CTA', 'FDA', 'GLM', 'GAM', 'MARS', 'MAXENT.Phillips', c('SRE', 'CTA', 'FDA', 'GLM', 'GAM', 'MARS', 'MAXENT.Phillips'))
   #names(algos) <- c('SRE', 'CTA', 'FDA', 'GLM', 'GAM',  'MARS', 'MAXENT.Phillips', 'ALL')
-  algos <- list(c('CTA', 'FDA', 'GLM', 'GAM', 'MARS', 'MAXENT.Phillips')); names(algos) <- c('ALL')
+  algos <- list(c('FDA', 'GLM', 'GAM', 'MARS', 'MAXENT.Phillips')); names(algos) <- c('ALL')
   evals <- c('ACCURACY', 'CSI', 'ETS', 'ROC', 'TSS') #Notes on evals; Kappa similar to tss, bias/far/sr/pod not very useful,
 
   i <- 1; t.list <- data.frame('algos'=names(algos), 'time'=rep(NA, length(algos)))
@@ -40,16 +50,13 @@ get_BestVars <- function(envi, pts, clust){
         k.test <- plyr::ldply(.data=k.names,
                               .fun=function(X){
 
-                                myExtr <- data.frame(terra::extract(c(envi2[[X]], k.stack), myXY))
+                                myExtr <- terra::extract(c(envi2[[X]], k.stack), myXY)
 
                                 if("nlcd_2019_land_cover_l48_20210604"%in%colnames(myExtr)){
                                   myExtr$nlcd_2019_land_cover_l48_20210604 <- as.factor(myExtr$nlcd_2019_land_cover_l48_20210604)
                                 }
 
-                                PA.df <- as.data.frame(myResp); PA.df[is.na(PA.df)] <- FALSE
-                                PA.fact <- sum(PA.df==F)/sum(myResp, na.rm=T)
-                                PA.df$myResp[which(PA.df==F)[round((1:sum(myResp, na.rm=T))*PA.fact)]] <- TRUE
-                                PA.df$myResp <- as.logical(PA.df$myResp)
+
 
                                 myOptions <- biomod2::BIOMOD_ModelingOptions('GLM'=list(test='none'))
                                 myData <- biomod2::BIOMOD_FormatingData(resp.var = myResp,
@@ -58,19 +65,21 @@ get_BestVars <- function(envi, pts, clust){
                                                                         resp.name = 'test',
                                                                         PA.nb.rep = 1,
                                                                         PA.strategy = 'user.defined',
-                                                                        PA.table = PA.df)
+                                                                        PA.user.table = PA.df)
 
                                 # 3. Computing the models
-                                myModels <- biomod2::BIOMOD_Modeling(data = myData, #bm.format = myData,
-                                                                     models.options = myOptions, #bm.options = myOptions,
+                                myModels <- biomod2::BIOMOD_Modeling(bm.format = myData, #bm.format = myData,
+                                                                     bm.options = myOptions, #bm.options = myOptions,
                                                                      models = i.algo,
-                                                                     NbRunEval = 1, #nb.rep = 1, #number of runs
-                                                                     DataSplit = 100,
-                                                                     models.eval.meth = evals, # metric.eval = c('ROC', 'TSS'),
+                                                                     CV.nb.rep = 1, #nb.rep = 1, #number of runs
+                                                                     CV.strategy = 'user.defined',
+                                                                     CV.user.table = PA.df,
+                                                                     CV.perc = 1,
+                                                                     metric.eval = evals, # metric.eval = c('ROC', 'TSS'),
                                                                      # save.output = T, # recommended to leave true
                                                                      # scale.models = F, #experimental don't use
-                                                                     do.full.models = F,
-                                                                     modeling.id = paste('test',"Modeling",sep=""))
+                                                                     CV.do.full.models = F,
+                                                                     weights=NULL)
 
                                 # Evaluation
                                 options(digits = 22)
