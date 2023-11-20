@@ -13,8 +13,8 @@ run_SDM <- function(spname, domain=world(), res){
   #### 1.0 Load Environmental data and species data ####
   #if(sources(domain)==sources(world())){
   #domain <- pops.sdm::l48()
-  #domain <- pops.sdm::state(c('Oregon'))
-  domain <- pops.sdm::county(state='Oregon', names=c('Coos', 'Curry', 'Douglas', 'Jackson', 'Josephine'))
+  domain <- pops.sdm::state(c('Oregon'))
+  #domain <- pops.sdm::county(state='Oregon', names=c('Coos', 'Curry', 'Douglas', 'Jackson', 'Josephine'))
   spname <- "Notholithocarpus densiflorus"; myName <- stringr::str_replace(tolower(spname),' ', '_')
   res <- 33
   dir <- getwd()
@@ -48,22 +48,42 @@ run_SDM <- function(spname, domain=world(), res){
   myXY <- terra::xyFromCell(object=pts.r, cell=c(pts.t, pts.s))
 
   #### 2.0 Run variable selection function to choose the ideal variables ####
-  if(!file.exists(paste(dir, '/envi/envi.best', terra::nrow(base.r), terra::ncol(base.r), terra::nlyr(envi.vars$rast), '.tif', sep=''))){
-    envi.best <- pops.sdm::get_BestVars(envi=envi.r, pts=pts.r, clust=envi.vars$clust)
-    terra::writeRaster(envi.best, paste(dir, '/envi/envi.best', terra::nrow(base.r), terra::ncol(base.r), terra::nlyr(envi.vars$rast), '.tif', sep=''))
-  }
+  # if(!file.exists(paste(dir, '/envi/envi.best', terra::nrow(base.r), terra::ncol(base.r), terra::nlyr(envi.vars$rast), '.tif', sep=''))){
+  #   envi.best <- pops.sdm::get_BestVars(envi=envi.r, pts=pts.r, clust=envi.vars$clust)
+  #   terra::writeRaster(envi.best, paste(dir, '/envi/envi.best', terra::nrow(base.r), terra::ncol(base.r), terra::nlyr(envi.vars$rast), '.tif', sep=''))
+  # }
+  #
+  # if(file.exists(paste(dir, '/envi/envi.best', terra::nrow(base.r), terra::ncol(base.r), terra::nlyr(envi.vars$rast), '.tif', sep=''))){
+  #   envi.best <- raster::stack(terra::rast(paste(dir, '/envi/envi.best', terra::nrow(base.r), terra::ncol(base.r), terra::nlyr(envi.vars$rast), '.tif', sep='')))
+  # }
 
-  if(file.exists(paste(dir, '/envi/envi.best', terra::nrow(base.r), terra::ncol(base.r), terra::nlyr(envi.vars$rast), '.tif', sep=''))){
-    envi.best <- raster::stack(terra::rast(paste(dir, '/envi/envi.best', terra::nrow(base.r), terra::ncol(base.r), terra::nlyr(envi.vars$rast), '.tif', sep='')))
-  }
-
+  envi.best <- envi.r[[c('Mean.Annual.Temp', 'Temp.Seasonality', 'Precip.Seasonality', 'Precip.Wettest.Quarter',
+                         'elevation', 'nlcd_2019_land_cover_l48_20210604', 'hillshade')]]
 
   #### 3.0 Define options and parameters for modeling ####
   #mod.dir <- 'C:\Users\bjselige\Documents\pops.sdm\notholithocarpus.densiflorus'
-  myExpl <- terra::extract(envi.best, myXY)
-  if("nlcd_2019_land_cover_l48_20210604"%in%colnames(myExpl)){
-    myExpl$nlcd_2019_land_cover_l48_20210604 <- as.factor(myExpl$nlcd_2019_land_cover_l48_20210604)
+
+
+  if("nlcd_2019_land_cover_l48_20210604"%in%names(envi.best)){
+    # myExpl$nlcd_2019_land_cover_l48_20210604 <- as.factor(myExpl$nlcd_2019_land_cover_l48_20210604)
+    myExtr <- terra::extract(envi.best, myXY)
+    lvls.in <- unique(myExtr$nlcd_2019_land_cover_l48_20210604)
+    lvls.all <- data.frame(id=c(0, 21, 22, 23, 24, 31, 41, 42, 43, 52, 71, 81, 82, 90, 95),
+                           cover=as.factor(c('Water', 'Dev_1', 'Dev_2', 'Dev_3', 'Dev_4', 'Barren', 'Decid',
+                                             'Everg', 'Mixed', 'Shrub', 'Grass', 'Pastr', 'Culti', 'Wetwdy', 'Wethrb')))
+
+    if(length(lvls.in)<nrow(lvls.all)){
+      lvls.no <- lvls.all$id[which((lvls.all$id%in%lvls.in)==F)]
+      envi.best$nlcd_2019_land_cover_l48_20210604 <- terra::subst(envi.best$nlcd_2019_land_cover_l48_20210604, from=lvls.no, to=NA)
+    }
+
+    myExpl <- terra::categories(envi.best, value=lvls.all, layer=which(names(envi.best)=="nlcd_2019_land_cover_l48_20210604"))
+    # envi.df <- as.data.frame(envi.best)
+    # envi.df$nlcd_2019_land_cover_l48_20210604 <- as.factor(envi.df$nlcd_2019_land_cover_l48_20210604)
+    # envi.xy <- terra::crds(envi.r$nlcd_2019_land_cover_l48_20210604, df=T)
   }
+
+
   myOptions <- biomod2::BIOMOD_ModelingOptions()
   myData <- biomod2::BIOMOD_FormatingData(resp.var = myResp,
                                           expl.var = myExpl,
@@ -92,47 +112,57 @@ run_SDM <- function(spname, domain=world(), res){
                                        do.full.models = F) # use this option if you don't want a data split
   myEval <- biomod2::get_evaluations(myModels) # get all models evaluation
 
+  # myname2 <- stringr::str_replace(myName, '_', '.')
+  # mysub <- c(paste(myname2,'_PA1_RUN1_GAM', sep=''),
+  #            paste(myname2,'_PA1_RUN1_GBM', sep=''),
+  #            paste(myname2,'_PA1_RUN1_GLM', sep=''),
+  #            paste(myname2,'_PA1_RUN1_RF', sep=''),
+  #            paste(myname2,'_PA1_RUN1_ANN', sep=''),
+  #            paste(myname2,'_PA1_RUN1_MARS', sep=''))
+
 
   #### 5.0 projection over the globe under current conditions ####
   myProj <- biomod2::BIOMOD_Projection(bm.mod = myModels,
-                                       new.env = envi.best,
+                                       new.env = myExpl,
+                                       # new.env = envi.df,
+                                       # new.env.xy = envi.xy,
                                        proj.name = 'current',
+                                       models.chosen = myModels@models.computed,
+                                       #models.chosen = mysub,
                                        #compress = 'xz',
                                        build.clamping.mask = F,
-                                       #output.format = '.grd',
+                                       output.format = '.tif',
                                        #do.stack=T
-                                       nb.cpu=parallel::detectCores()/2,
+                                       #nb.cpu=parallel::detectCores()/2,
                                        binary.meth = NULL)
   myProj2 <- biomod2::get_predictions(myProj) # if you want to make custom plots, you can also get the projected map
 
-  myname2 <- stringr::str_replace(myName, '_', '.')
-  mysub <- c(paste(myname2, '_PA1_RUN1_GAM', sep=''),
-             paste(myname2,'_PA1_RUN1_GLM', sep=''),
-             paste(myname2,'_PA1_RUN1_RF', sep=''),
-             paste(myname2,'_PA1_RUN1_ANN', sep=''),
-             paste(myname2,'_PA1_RUN1_MARS', sep=''))
+
 
 
   #### 6.0 Ensembling the models ####
-  myEnsemble <- biomod2::BIOMOD_EnsembleModeling(modeling.output =  myModels,
-                                                 chosen.models = myModels@models.computed, #myModels@models.computed[which(myModels@models.computed%in%mysub)],
+  myEnsemble <- biomod2::BIOMOD_EnsembleModeling(bm.mod =  myModels,
+                                                 models.chosen = myModels@models.computed, #myModels@models.computed[which(myModels@models.computed%in%mysub)],
                                                  em.by = 'all', #'all' combines all algos and PA runs into a single ensemble.
-                                                 eval.metric = 'TSS', #only mean.weight and committee averaging use this argument, leaving it as 'TSS' is faster
-                                                 models.eval.meth = myEvals,
-                                                 prob.mean = T,
-                                                 prob.cv = T,
-                                                 prob.ci = T, prob.ci.alpha = 0.05,
-                                                 #prob.median = F, prob.mean.weight = T,
-                                                 #prob.mean.weight.decay = 'proportional',
-                                                 committee.averaging = T)
+                                                 metric.eval = 'TSS', #only mean.weight and committee averaging use this argument, leaving it as 'TSS' is faster
+                                                 metric.select = 'TSS',
+                                                 #models.eval.meth = myEvals,
+                                                 em.algo = c('EMwmean', "EMcv", 'EMci', 'EMca'))
+  # prob.mean = T,
+  # prob.cv = T,
+  # prob.ci = T, prob.ci.alpha = 0.05,
+  #prob.median = F, prob.mean.weight = T,
+  #prob.mean.weight.decay = 'proportional',
+  #committee.averaging = T)
   myEvalEM <- biomod2::get_evaluations(myEnsemble) # get evaluation scores
 
-  myProjEM <- biomod2::BIOMOD_EnsembleForecasting(EM.output = myEnsemble,
-                                                  projection.output = myProj,
-                                                  selected.models = 'all',
-                                                  binary.meth = NULL,
-                                                  nb.cpu=parallel::detectCores()/2,
+  myProjEM <- biomod2::BIOMOD_EnsembleForecasting(bm.em = myEnsemble,
+                                                  bm.proj = myProj,
+                                                  #selected.models = 'all',
+                                                  #binary.meth = NULL,
+                                                  #nb.cpu=parallel::detectCores()/2,
                                                   #compress = 'xz',
+                                                  metric.filter='TSS',
                                                   build.clamping.mask = F)
 
 
@@ -154,7 +184,7 @@ run_SDM <- function(spname, domain=world(), res){
   trs.metrics <- plyr::ldply(.data=c(1:length(trs)),
                              .fun=function(X){
                                p2.tr <- p2>trs[X]
-                               x.zero <- sum(raster::extract(x=p2.tr, y=as(pts.1, 'Spatial'))==0, na.rm=T)/length(pts.1)
+                               x.zero <- sum(terra::extract(x=p2.tr, y=pts.1)==0, na.rm=T)/length(pts.1)
                                x.area <- sum(terra::values(p2.tr), na.rm=T)/length(na.omit(p2[]))
                                x.score <- 1 - x.zero - x.area
                                df.out <- data.frame('trs'=trs[X], 'zero'=x.zero, 'area'=x.area, 'score'=x.score, row.names=trs[X])
