@@ -23,6 +23,7 @@ run_SDM <- function(spname, domain=world(), res){
   #### 1.1 Gather Environmental Data ####
   envi.vars <- pops.sdm::get_Envi(bio=T, lc=T, ptime=F, soil=F, pop=F, elev=T, res=res)
   base.r <- terra::crop(x=pops.sdm::rasterbase(res=res), y=domain, mask=T)
+  base.r <- terra::subst(base.r, from=0, to=NA)
 
   if(res>100){envi.r <- terra::crop(x=envi.vars$rast, y=domain, mask=T); envi.r <- envi.r*base.r}
   if(res<=100){
@@ -47,6 +48,18 @@ run_SDM <- function(spname, domain=world(), res){
   myResp <- pts.v[c(pts.t, pts.s)]; myResp[myResp==0] <- NA
   myXY <- terra::xyFromCell(object=pts.r, cell=c(pts.t, pts.s))
 
+  if("nlcd_2019_land_cover_l48_20210604"%in%names(envi.r)){
+    myExtr <- terra::extract(envi.r, myXY)
+    lvls.in <- unique(myExtr$nlcd_2019_land_cover_l48_20210604)
+    lvls.all <- data.frame(id=c(0, 21, 22, 23, 24, 31, 41, 42, 43, 52, 71, 81, 82, 90, 95),
+                           cover=as.factor(c('Water', 'Dev_1', 'Dev_2', 'Dev_3', 'Dev_4', 'Barren', 'Decid',
+                                             'Everg', 'Mixed', 'Shrub', 'Grass', 'Pastr', 'Culti', 'Wetwdy', 'Wethrb')))
+    if(length(lvls.in)<nrow(lvls.all)){
+      lvls.no <- lvls.all$id[which((lvls.all$id%in%lvls.in)==F)]
+      envi.r$nlcd_2019_land_cover_l48_20210604 <- terra::subst(envi.r$nlcd_2019_land_cover_l48_20210604, from=lvls.no, to=NA)
+    }
+  }
+
   #### 2.0 Run variable selection function to choose the ideal variables ####
   # if(!file.exists(paste(dir, '/envi/envi.best', terra::nrow(base.r), terra::ncol(base.r), terra::nlyr(envi.vars$rast), '.tif', sep=''))){
   #   envi.best <- pops.sdm::get_BestVars(envi=envi.r, pts=pts.r, clust=envi.vars$clust)
@@ -62,28 +75,6 @@ run_SDM <- function(spname, domain=world(), res){
 
   #### 3.0 Define options and parameters for modeling ####
   #mod.dir <- 'C:\Users\bjselige\Documents\pops.sdm\notholithocarpus.densiflorus'
-
-
-  if("nlcd_2019_land_cover_l48_20210604"%in%names(envi.best)){
-    # myExpl$nlcd_2019_land_cover_l48_20210604 <- as.factor(myExpl$nlcd_2019_land_cover_l48_20210604)
-    myExtr <- terra::extract(envi.best, myXY)
-    lvls.in <- unique(myExtr$nlcd_2019_land_cover_l48_20210604)
-    lvls.all <- data.frame(id=c(0, 21, 22, 23, 24, 31, 41, 42, 43, 52, 71, 81, 82, 90, 95),
-                           cover=as.factor(c('Water', 'Dev_1', 'Dev_2', 'Dev_3', 'Dev_4', 'Barren', 'Decid',
-                                             'Everg', 'Mixed', 'Shrub', 'Grass', 'Pastr', 'Culti', 'Wetwdy', 'Wethrb')))
-
-    if(length(lvls.in)<nrow(lvls.all)){
-      lvls.no <- lvls.all$id[which((lvls.all$id%in%lvls.in)==F)]
-      envi.best$nlcd_2019_land_cover_l48_20210604 <- terra::subst(envi.best$nlcd_2019_land_cover_l48_20210604, from=lvls.no, to=NA)
-    }
-
-    myExpl <- terra::categories(envi.best, value=lvls.all, layer=which(names(envi.best)=="nlcd_2019_land_cover_l48_20210604"))
-    # envi.df <- as.data.frame(envi.best)
-    # envi.df$nlcd_2019_land_cover_l48_20210604 <- as.factor(envi.df$nlcd_2019_land_cover_l48_20210604)
-    # envi.xy <- terra::crds(envi.r$nlcd_2019_land_cover_l48_20210604, df=T)
-  }
-
-
   myOptions <- biomod2::BIOMOD_ModelingOptions()
   myData <- biomod2::BIOMOD_FormatingData(resp.var = myResp,
                                           expl.var = myExpl,
@@ -96,7 +87,7 @@ run_SDM <- function(spname, domain=world(), res){
   # Notes on algorithm choices; CTA is redundant with Random Forest, FDA and SRE have relatively low performance
   myAlgos <- c('GAM', 'GBM', 'GLM', 'RF', 'ANN', 'MARS', 'MAXENT.Phillips')
   # Notes on evaluation methods: POD/SR/FR/BIAS is not useful, KAPPA, and TSS get similar results
-  myEvals <- c('ACCURACY', 'CSI', 'ETS', 'ROC', 'TSS')
+  myEvals <- c('TSS') #myEvals <- c('ACCURACY', 'CSI', 'ETS', 'ROC', 'TSS')
 
 
   #### 4.0 Run and evaluate the models ####
@@ -112,14 +103,6 @@ run_SDM <- function(spname, domain=world(), res){
                                        do.full.models = F) # use this option if you don't want a data split
   myEval <- biomod2::get_evaluations(myModels) # get all models evaluation
 
-  # myname2 <- stringr::str_replace(myName, '_', '.')
-  # mysub <- c(paste(myname2,'_PA1_RUN1_GAM', sep=''),
-  #            paste(myname2,'_PA1_RUN1_GBM', sep=''),
-  #            paste(myname2,'_PA1_RUN1_GLM', sep=''),
-  #            paste(myname2,'_PA1_RUN1_RF', sep=''),
-  #            paste(myname2,'_PA1_RUN1_ANN', sep=''),
-  #            paste(myname2,'_PA1_RUN1_MARS', sep=''))
-
 
   #### 5.0 projection over the globe under current conditions ####
   myProj <- biomod2::BIOMOD_Projection(bm.mod = myModels,
@@ -133,11 +116,9 @@ run_SDM <- function(spname, domain=world(), res){
                                        build.clamping.mask = F,
                                        output.format = '.tif',
                                        #do.stack=T
-                                       #nb.cpu=parallel::detectCores()/2,
+                                       #nb.cpu=parallel::detectCores()/2, #doesn't work on windows
                                        binary.meth = NULL)
   myProj2 <- biomod2::get_predictions(myProj) # if you want to make custom plots, you can also get the projected map
-
-
 
 
   #### 6.0 Ensembling the models ####
@@ -160,7 +141,7 @@ run_SDM <- function(spname, domain=world(), res){
                                                   bm.proj = myProj,
                                                   #selected.models = 'all',
                                                   #binary.meth = NULL,
-                                                  #nb.cpu=parallel::detectCores()/2,
+                                                  #nb.cpu=parallel::detectCores()/2, #doesn't work on windows
                                                   #compress = 'xz',
                                                   metric.filter='TSS',
                                                   build.clamping.mask = F)
