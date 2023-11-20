@@ -267,17 +267,13 @@ get_Envi <- function(bio=F, elev=F, gdd=F, lc=F, pop=F, ptime=F, rnr=F, soil=F, 
         #   lcvar <- terra::rast(paste(lcpath, 'ncld_2019_', res, 'm.tif', sep=''))
         # }
 
-        #lcvar$nlcd_2019_land_cover_l48_20210604 <- terra::subst(lcvar$nlcd_2019_land_cover_l48_20210604, from=0, to=NA)
-
-        lvls.all <- data.frame(id=c(0, 21, 22, 23, 24, 31, 41, 42, 43, 52, 71, 81, 82, 90, 95),
-                               cover=as.factor(c('Water', 'Dev_1', 'Dev_2', 'Dev_3', 'Dev_4', 'Barren', 'Decid', 'Everg',
-                                                 'Mixed', 'Shrub', 'Grass', 'Pastr', 'Culti', 'Wetwdy', 'Wethrb')))
-
-        lcvar <- terra::categories(lcvar, value=lvls.all, layer=which(names(lcvar)=="nlcd_2019_land_cover_l48_20210604"))
-
       }
     }
-
+    #lcvar$nlcd_2019_land_cover_l48_20210604 <- terra::subst(lcvar$nlcd_2019_land_cover_l48_20210604, from=0, to=NA)
+    lvls.all <- data.frame(id=c(0, 21, 22, 23, 24, 31, 41, 42, 43, 52, 71, 81, 82, 90, 95),
+                           cover=as.factor(c('Water', 'Dev_1', 'Dev_2', 'Dev_3', 'Dev_4', 'Barren', 'Decid', 'Everg',
+                                             'Mixed', 'Shrub', 'Grass', 'Pastr', 'Culti', 'Wetwdy', 'Wethrb')))
+    lcvar <- terra::categories(lcvar, value=lvls.all, layer=which(names(lcvar)=="nlcd_2019_land_cover_l48_20210604"))
     lccl <- data.frame(var=names(lcvar), cluster='landcover')
     # lccl$cluster[which(lccl$var%in%c('built'))] <- 'Development'
     # lccl$cluster[which(lccl$var%in%c('decid', 'everg', 'trees', 'shrub', 'grass', 'wetld'))] <- 'Vegetation'
