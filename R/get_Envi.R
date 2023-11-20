@@ -273,6 +273,8 @@ get_Envi <- function(bio=F, elev=F, gdd=F, lc=F, pop=F, ptime=F, rnr=F, soil=F, 
     # lccl$cluster[which(lccl$var%in%c('built'))] <- 'Development'
     # lccl$cluster[which(lccl$var%in%c('decid', 'everg', 'trees', 'shrub', 'grass', 'wetld'))] <- 'Vegetation'
     # lccl$cluster[which(lccl$var%in%c('pastr', 'cropl', 'culti'))] <- 'Agriculture'
+    names(lcvar) <- 'landcover'
+    lccl <- data.frame(var='landcover', cluster='Landcover 1')
   }
 
   if(pop==T){
