@@ -419,7 +419,7 @@ get_Envi <- function(bio=F, elev=F, gdd=F, lc=F, pop=F, ptime=F, rnr=F, soil=F, 
     lvls.all <- data.frame(id=c(0, 21, 22, 23, 24, 31, 41, 42, 43, 52, 71, 81, 82, 90, 95),
                            cover=as.factor(c('Water', 'Dev_1', 'Dev_2', 'Dev_3', 'Dev_4', 'Barren', 'Decid', 'Everg',
                                              'Mixed', 'Shrub', 'Grass', 'Pastr', 'Culti', 'Wetwdy', 'Wethrb')))
-    envi <- terra::categories(envi, value=lvls.all, layer=which(names(envi)=="nlcd_2019_land_cover_l48_20210604"))
+    envi <- terra::categories(envi, value=lvls.all, layer=which(names(envi)=="landcover"))
   }
 
   clst <- rbind(biocl, elevcl, gddcl, lccl, popcl, timecl, rnrcl, solcl)
