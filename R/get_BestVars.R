@@ -28,7 +28,7 @@ get_BestVars <- function(envi, pts, clust){
   myPAtable <- data.frame(myPAtable[c(pts.t, pa.x),])
 
   #pa.reps <- 5; #myPAtable <- data.frame(matrix(myPA, ncol=pa.reps))
-  #nreps <- 1 #unnecessary since running full models yields same results, no extra reps needed
+  nreps <- 1 #unnecessary since running full models yields same results, no extra reps needed
   #p.max <- 1000000-length(pts.t) #pts.r <- sample(x=pts.f, size=pmin(length(pts.f), p.max))
 
   # Notes on algorithm selection. GBM and ANN do not work with all data used/no split.
