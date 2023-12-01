@@ -8,29 +8,28 @@ get_BestVars <- function(envi, pts, clust){
 
   #if(class(envi.r)[1]=="SpatRaster"){envi2 <- raster::stack(envi$rast)}
   envi2 <- envi; envi.cv <- clust
-  pts.v <- terra::values(pts)
-  pts.t <- which(pts.v==1)
-  pts.f <- which(pts.v==0)
-  pts.s <- sample(x=pts.f, size=length(pts.t))
-  myResp <- pts.v[pts.t]#; myResp[myResp==0] <- NA
-  myXY <- terra::xyFromCell(object=pts.r, cell=pts.t)
-  myPA <- terra::xyFromCell(object=pts.r, cell=pts.s)
-  #myXY2 <- c(myXY, myPA)
-  nreps <- 1 #unnecessary since running full models yields same results, no extra reps needed
+  pts <- pts!=is.na(pts)
+  myResp <- terra::values(pts)
+  pts.t <- which(myResp==1)
+
+  # # Format Data with pseudo-absences : user.defined method
+  myPA <- ifelse(myResp == 1, TRUE, FALSE)
+  myPAtable <- data.frame(PA1 = myPA, PA2 = myPA, PA3 = myPA, PA4 = myPA, PA5 = myPA)
+  pa.x <- vector()
+  for (i in 1:ncol(myPAtable)){
+    pa.s <- sample(which(myPAtable[, i] == FALSE), length(pts.t)*3)
+    myPAtable[pa.s, i] <- TRUE
+    pa.x <- c(pa.x, pa.s)
+  }
+  pa.x <- unique(pa.x)
+  myResp <- myResp[c(pts.t, pa.x)]
+  myResp.PA <- ifelse(myResp == 1, 1, NA)
+  myResp.XY <- terra::xyFromCell(object=pts, cell=c(pts.t, pa.x))
+  myPAtable <- data.frame(myPAtable[c(pts.t, pa.x),])
+
+  #pa.reps <- 5; #myPAtable <- data.frame(matrix(myPA, ncol=pa.reps))
+  #nreps <- 1 #unnecessary since running full models yields same results, no extra reps needed
   #p.max <- 1000000-length(pts.t) #pts.r <- sample(x=pts.f, size=pmin(length(pts.f), p.max))
-
-  myXY2 <- terra::vect(myXY, atts=data.frame(id=c(rep(1, nrow(myXY)))), crs=terra::crs(pts.r))
-  myPA2 <- terra::vect(myPA, atts=data.frame(id=c(rep(NA, nrow(myXY)))), crs=terra::crs(pts.r))
-
-  #myResp2 <- terra::vect(myXY, atts=data.frame(id=c(rep(1, nrow(myXY)))))
-  myResp2 <- terra::vect(rbind(myXY, myPA), atts=data.frame(id=c(rep(1, nrow(myXY)),rep(NA, nrow(myXY)))))
-  #sampl <- sample(x=1:nrow(myXY), size=100)
-  #calib <- setdiff(c(1:nrow(myXY)), sampl)
-  #valid <- sampl
-
-  #myResp.C <- myResp2[c(calib, calib+nrow(myXY))]
-  #myResp.V <- myResp2[c(valid, valid+nrow(myXY))]
-  #myResp <- terra::vect(my)
 
   # Notes on algorithm selection. GBM and ANN do not work with all data used/no split.
   # SRE, CTA, FDA, GLM, GAM, RF, and MARS are comparable in speed (SRE fastest, MARS slowest by about 25%, rest in respective order)
@@ -57,36 +56,27 @@ get_BestVars <- function(envi, pts, clust){
 
                               myExpl <- c(envi2[[X]], k.stack)
                               myOptions <- biomod2::BIOMOD_ModelingOptions('GLM'=list(test='none'))
-                              myData <- biomod2::BIOMOD_FormatingData(resp.var = myResp2,
+                              myData <- biomod2::BIOMOD_FormatingData(resp.var = myResp.PA,
                                                                       expl.var = myExpl,
                                                                       resp.name = 'test',
-                                                                      # resp.xy = myXY,
-                                                                      #eval.resp.var = myResp.V,
-                                                                      PA.nb.rep = 1,
-                                                                      PA.nb.absences = nrow(myXY),
-                                                                      PA.strategy = 'random'
-                                                                      #PA.strategy = 'user.defined',
-                                                                      #PA.user.table = data.frame(c(rep(F, nrow(myXY)), rep(T, nrow(myXY))))
-                              )
+                                                                      resp.xy = myResp.XY,
+                                                                      PA.strategy = 'user.defined',
+                                                                      PA.user.table = myPAtable)
 
-                              myCV <- data.frame(rep(T, length(myResp2))); colnames(myCV) <- '_PA1_RUN1'
                               # 3. Computing the models
                               myModels <- biomod2::BIOMOD_Modeling(bm.format = myData, #bm.format = myData,
                                                                    bm.options = myOptions, #bm.options = myOptions,
                                                                    models = i.algo,
                                                                    CV.strategy='kfold',
-                                                                   #CV.user.table=myCV,
-                                                                   CV.k=3,
-                                                                   #CV.nb.rep = 3, #nb.rep = 1, #number of runs
-                                                                   #CV.perc = .66, #CV.perc = .66,
-                                                                   metric.eval = evals, # metric.eval = c('ROC', 'TSS'),
+                                                                   CV.k=5,
+                                                                   metric.eval = evals
                                                                    #save.output = T, # recommended to leave true
                                                                    #scale.models = F, #experimental don't use
                                                                    #CV.do.full.models = T
                               )
 
                               # Evaluation
-                              #options(digits = 3)
+                              #options(digits = 7)
                               myEval <- biomod2::get_evaluations(myModels)
                               eval.v <- myEval$validation
                               return(mean(eval.v))

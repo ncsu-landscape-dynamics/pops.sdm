@@ -48,21 +48,23 @@ run_SDM <- function(spname, domain=world(), res){
   myResp <- pts.v[c(pts.t, pts.s)]; myResp[myResp==0] <- NA
   myXY <- terra::xyFromCell(object=pts.r, cell=c(pts.t, pts.s))
 
-  if("nlcd_2019_land_cover_l48_20210604"%in%names(envi.r)){
-    myExtr <- terra::extract(envi.r, myXY)
-    lvls.in <- unique(myExtr$nlcd_2019_land_cover_l48_20210604)
-    lvls.all <- data.frame(id=c(0, 21, 22, 23, 24, 31, 41, 42, 43, 52, 71, 81, 82, 90, 95),
-                           cover=as.factor(c('Water', 'Dev_1', 'Dev_2', 'Dev_3', 'Dev_4', 'Barren', 'Decid',
-                                             'Everg', 'Mixed', 'Shrub', 'Grass', 'Pastr', 'Culti', 'Wetwdy', 'Wethrb')))
+  if("landcover"%in%names(envi.r)){
+    myExtr <- terra::extract(envi.r$landcover, myXY)
+    lvls.in <- unique(myExtr$landcover)
+    lvls.all <- data.frame(id=c(12, 21, 22, 23, 24, 31, 41, 42, 43, 52, 71, 81, 82, 90, 95),
+                           landcover=as.factor(c('Ice', 'Dev_1', 'Dev_2', 'Dev_3', 'Dev_4', 'Barren', 'Decid', 'Everg',
+                                                 'Mixed', 'Shrub', 'Grass', 'Pastr', 'Culti', 'WetWdy', 'WetHrb')))
     if(length(lvls.in)<nrow(lvls.all)){
       lvls.no <- lvls.all$id[which((lvls.all$id%in%lvls.in)==F)]
-      envi.r$nlcd_2019_land_cover_l48_20210604 <- terra::subst(envi.r$nlcd_2019_land_cover_l48_20210604, from=lvls.no, to=NA)
+      envi.r$landcover <- terra::subst(envi.r$landcover, from=lvls.no, to=NA)
+      lvls.all <- lvls.all[which(lvls.all$id!=lvls.no),]
     }
+    envi.r <- terra::categories(envi.r, value=lvls.all, layer=which(names(envi.r)=="landcover"))
   }
 
   #### 2.0 Run variable selection function to choose the ideal variables ####
   # if(!file.exists(paste(dir, '/envi/envi.best', terra::nrow(base.r), terra::ncol(base.r), terra::nlyr(envi.vars$rast), '.tif', sep=''))){
-  #   envi.best <- pops.sdm::get_BestVars(envi=envi.r, pts=pts.r, clust=envi.vars$clust)
+  envi.best <- pops.sdm::get_BestVars(envi=envi.r, pts=pts.r, clust=envi.vars$clust)
   #   terra::writeRaster(envi.best, paste(dir, '/envi/envi.best', terra::nrow(base.r), terra::ncol(base.r), terra::nlyr(envi.vars$rast), '.tif', sep=''))
   # }
   #
@@ -71,13 +73,13 @@ run_SDM <- function(spname, domain=world(), res){
   # }
 
   envi.best <- envi.r[[c('Mean.Annual.Temp', 'Temp.Seasonality', 'Precip.Seasonality', 'Precip.Wettest.Quarter',
-                         'elevation', 'nlcd_2019_land_cover_l48_20210604', 'hillshade')]]
+                         'elevation', 'landcover', 'hillshade')]]
 
   #### 3.0 Define options and parameters for modeling ####
   #mod.dir <- 'C:\Users\bjselige\Documents\pops.sdm\notholithocarpus.densiflorus'
   myOptions <- biomod2::BIOMOD_ModelingOptions()
   myData <- biomod2::BIOMOD_FormatingData(resp.var = myResp,
-                                          expl.var = myExpl,
+                                          expl.var = envi.best,
                                           resp.xy = myXY,
                                           resp.name = myName,
                                           PA.nb.rep = 1,
@@ -85,7 +87,7 @@ run_SDM <- function(spname, domain=world(), res){
                                           PA.nb.absences = sum(myResp, na.rm=T) #PA.table = PA.df
   )
   # Notes on algorithm choices; CTA is redundant with Random Forest, FDA and SRE have relatively low performance
-  myAlgos <- c('GAM', 'GBM', 'GLM', 'RF', 'ANN', 'MARS', 'MAXENT.Phillips')
+  myAlgos <- c('GAM', 'GBM', 'GLM', 'RF', 'ANN', 'MARS', 'MAXENT')
   # Notes on evaluation methods: POD/SR/FR/BIAS is not useful, KAPPA, and TSS get similar results
   myEvals <- c('TSS') #myEvals <- c('ACCURACY', 'CSI', 'ETS', 'ROC', 'TSS')
 
@@ -106,7 +108,7 @@ run_SDM <- function(spname, domain=world(), res){
 
   #### 5.0 projection over the globe under current conditions ####
   myProj <- biomod2::BIOMOD_Projection(bm.mod = myModels,
-                                       new.env = myExpl,
+                                       new.env = envi.best,
                                        # new.env = envi.df,
                                        # new.env.xy = envi.xy,
                                        proj.name = 'current',
