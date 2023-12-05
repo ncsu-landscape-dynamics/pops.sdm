@@ -112,6 +112,21 @@ get_Envi <- function(bio=F, elev=F, gdd=F, lc=F, pop=F, ptime=F, rnr=F, soil=F, 
         # }
         elevvar <- c(dem.1, shd.1s)
       }
+      if(res>33){
+        if(!file.exists(paste(geodir, 'USA\\elevation\\dem_', res, '.tif', sep=''))){
+        dem.1 <- terra::rast(paste(geodir, 'USA\\elevation\\dem_1s.tif', sep=''))
+        shd.1s <- terra::rast('D:\\hillshade_1s.tif')
+        dem.agg <- terra::aggregate(dem.1, fact=res/33, fun='mean')
+        shd.agg <- terra::aggregate(shd.1s, fact=res/33, fun='mean')
+        terra::writeRaster(dem.agg, paste(geodir, 'USA\\elevation\\dem_', res, '.tif', sep=''))
+        terra::writeRaster(shd.agg, paste(geodir, 'USA\\elevation\\shd_', res, '.tif', sep=''))
+        }
+        if(file.exists(paste(geodir, 'USA\\elevation\\dem_', res, '.tif', sep=''))){
+          dem <- terra::rast(paste(geodir, 'USA\\elevation\\dem_', res, '.tif', sep=''))
+          shd <- terra::rast(paste(geodir, 'USA\\elevation\\shd_', res, '.tif', sep=''))
+          elevvar <- c(dem, shd)
+        }
+      }
     }
     elevcl <- data.frame(var=names(elevvar), cluster=c('Elevation 1', 'Elevation 2'))
   }
