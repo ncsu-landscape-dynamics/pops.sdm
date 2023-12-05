@@ -12,8 +12,9 @@
 run_SDM <- function(spname, domain=world(), res){
   #### 1.0 Load Environmental data and species data ####
   #if(sources(domain)==sources(world())){
-  #domain <- pops.sdm::l48()
+  domain <- pops.sdm::l48()
   domain <- pops.sdm::state(c('Oregon'))
+
   #domain <- pops.sdm::county(state='Oregon', names=c('Coos', 'Curry', 'Douglas', 'Jackson', 'Josephine'))
   spname <- "Notholithocarpus densiflorus"; myName <- stringr::str_replace(tolower(spname),' ', '_')
   res <- 33
@@ -21,7 +22,8 @@ run_SDM <- function(spname, domain=world(), res){
 
 
   #### 1.1 Gather Environmental Data ####
-  envi.vars <- pops.sdm::get_Envi(bio=T, lc=T, ptime=F, soil=F, pop=F, elev=T, res=res)
+  envi.vars <- pops.sdm::get_Envi(bio=T, lc=T, ptime=F, soil=T, pop=F, elev=T, res=res)
+  envi.vars <- pops.sdm::get_Envi(bio=T, lc=T, ptime=T, soil=T, pop=F, elev=T, res=250)
   base.r <- terra::crop(x=pops.sdm::rasterbase(res=res), y=domain, mask=T)
   base.r <- terra::subst(base.r, from=0, to=NA)
 
@@ -44,9 +46,9 @@ run_SDM <- function(spname, domain=world(), res){
   pts.v <- terra::values(pts.r)
   pts.t <- which(pts.v==1)
   pts.f <- which(pts.v==0)
-  pts.s <- sample(x=pts.f, size=length(pts.t))
-  myResp <- pts.v[c(pts.t, pts.s)]; myResp[myResp==0] <- NA
-  myXY <- terra::xyFromCell(object=pts.r, cell=c(pts.t, pts.s))
+  #pts.s <- sample(x=pts.f, size=length(pts.t))
+  #myResp <- pts.v[c(pts.t, pts.s)]; myResp[myResp==0] <- NA
+  #myXY <- terra::xyFromCell(object=pts.r, cell=c(pts.t, pts.s))
 
   if("landcover"%in%names(envi.r)){
     myExtr <- terra::extract(envi.r$landcover, myXY)
@@ -64,28 +66,42 @@ run_SDM <- function(spname, domain=world(), res){
 
   #### 2.0 Run variable selection function to choose the ideal variables ####
   # if(!file.exists(paste(dir, '/envi/envi.best', terra::nrow(base.r), terra::ncol(base.r), terra::nlyr(envi.vars$rast), '.tif', sep=''))){
-  envi.best <- pops.sdm::get_BestVars(envi=envi.r, pts=pts.r, clust=envi.vars$clust)
-  #   terra::writeRaster(envi.best, paste(dir, '/envi/envi.best', terra::nrow(base.r), terra::ncol(base.r), terra::nlyr(envi.vars$rast), '.tif', sep=''))
+  envi.best <- get_BestVars(envi=envi.r, pts=pts.r, clust=envi.vars$clust)
+  terra::writeRaster(envi.best, paste(dir, '/envi/envi.best', terra::nrow(base.r), terra::ncol(base.r), terra::nlyr(envi.vars$rast), '.tif', sep=''))
   # }
   #
   # if(file.exists(paste(dir, '/envi/envi.best', terra::nrow(base.r), terra::ncol(base.r), terra::nlyr(envi.vars$rast), '.tif', sep=''))){
   #   envi.best <- raster::stack(terra::rast(paste(dir, '/envi/envi.best', terra::nrow(base.r), terra::ncol(base.r), terra::nlyr(envi.vars$rast), '.tif', sep='')))
   # }
 
-  envi.best <- envi.r[[c('Mean.Annual.Temp', 'Temp.Seasonality', 'Precip.Seasonality', 'Precip.Wettest.Quarter',
-                         'elevation', 'landcover', 'hillshade')]]
+  pts.2 <- pts.r!=is.na(pts.r)
+  myResp <- terra::values(pts.2)
+  myPA <- ifelse(myResp == 1, TRUE, FALSE)
+  myPAtable <- data.frame(PA1 = myPA, PA2 = myPA, PA3 = myPA, PA4 = myPA, PA5 = myPA,
+                          PA6 = myPA, PA7 = myPA, PA8 = myPA, PA9 = myPA, PA10 = myPA)
+  pa.x <- vector()
+  for (i in 1:ncol(myPAtable)){
+    pa.s <- sample(which(myPAtable[, i] == FALSE), length(pts.t)*3)
+    myPAtable[pa.s, i] <- TRUE
+    pa.x <- c(pa.x, pa.s)
+  }
+  pa.x <- unique(pa.x)
+  myResp <- myResp[c(pts.t, pa.x)]
+  myResp.PA <- ifelse(myResp == 1, 1, NA)
+  myResp.XY <- terra::xyFromCell(object=pts.2, cell=c(pts.t, pa.x))
+  myPAtable <- data.frame(myPAtable[c(pts.t, pa.x),])
+
 
   #### 3.0 Define options and parameters for modeling ####
   #mod.dir <- 'C:\Users\bjselige\Documents\pops.sdm\notholithocarpus.densiflorus'
+  myExpl <- envi.best
   myOptions <- biomod2::BIOMOD_ModelingOptions()
-  myData <- biomod2::BIOMOD_FormatingData(resp.var = myResp,
-                                          expl.var = envi.best,
-                                          resp.xy = myXY,
-                                          resp.name = myName,
-                                          PA.nb.rep = 1,
-                                          PA.strategy = 'random',
-                                          PA.nb.absences = sum(myResp, na.rm=T) #PA.table = PA.df
-  )
+  myData <- biomod2::BIOMOD_FormatingData(resp.var = myResp.PA,
+                                          expl.var = myExpl,
+                                          resp.name = 'test',
+                                          resp.xy = myResp.XY,
+                                          PA.strategy = 'user.defined',
+                                          PA.user.table = myPAtable)
   # Notes on algorithm choices; CTA is redundant with Random Forest, FDA and SRE have relatively low performance
   myAlgos <- c('GAM', 'GBM', 'GLM', 'RF', 'ANN', 'MARS', 'MAXENT')
   # Notes on evaluation methods: POD/SR/FR/BIAS is not useful, KAPPA, and TSS get similar results
@@ -97,12 +113,12 @@ run_SDM <- function(spname, domain=world(), res){
                                        modeling.id = paste(myName,"AllModels",sep=""),
                                        models = myAlgos,
                                        bm.options = myOptions,
-                                       CV.nb.rep = 1, #3, #number of runs
-                                       data.split.perc = 80,
+                                       CV.strategy='kfold',
+                                       CV.k=5,
                                        metric.eval = myEvals,
-                                       var.import = 1,
+                                       var.import = 0,
                                        #SaveObj = T,
-                                       do.full.models = F) # use this option if you don't want a data split
+                                       CV.do.full.models = F) # use this option if you don't want a data split
   myEval <- biomod2::get_evaluations(myModels) # get all models evaluation
 
 
