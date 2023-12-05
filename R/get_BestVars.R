@@ -17,7 +17,7 @@ get_BestVars <- function(envi, pts, clust){
   myPAtable <- data.frame(PA1 = myPA)#, PA2 = myPA, PA3 = myPA, PA4 = myPA, PA5 = myPA)
   pa.x <- vector()
   for (i in 1:ncol(myPAtable)){
-    pa.s <- sample(which(myPAtable[, i] == FALSE), length(pts.t)) #length(pts.t)*3)
+    pa.s <- sample(which(myPAtable[, i] == FALSE), length(pts.t)/3)
     myPAtable[pa.s, i] <- TRUE
     pa.x <- c(pa.x, pa.s)
   }
@@ -67,10 +67,8 @@ get_BestVars <- function(envi, pts, clust){
                               myModels <- biomod2::BIOMOD_Modeling(bm.format = myData, #bm.format = myData,
                                                                    bm.options = myOptions, #bm.options = myOptions,
                                                                    models = i.algo,
-                                                                   CV.perc=.999,
+                                                                   CV.perc=.9999,
                                                                    CV.nb.rep=1,
-                                                                   # CV.strategy='kfold',
-                                                                   # CV.k=5,
                                                                    metric.eval = evals,
                                                                    #save.output = T, # recommended to leave true
                                                                    #scale.models = F, #experimental don't use
