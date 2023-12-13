@@ -18,6 +18,8 @@ getEOM <-function(){
   return(eom)
 }
 
+#' @export
+
 getEOR <-function(){
   eor <- pops.sdm::state(c('North Dakota', 'South Dakota',
                            'Nebraska', 'Kansas', 'Arkansas',
@@ -40,6 +42,8 @@ getEOR <-function(){
   return(eor)
 }
 
+#' @export
+
 getWOM <- function(){
   wom <- pops.sdm::state(c('Washington', 'Oregon', 'California',
                            'Arizona', 'Nevada', 'Utah', 'Idaho',
@@ -52,6 +56,8 @@ getWOM <- function(){
   return(wom)
 }
 
+#' @export
+
 getWOR <- function(){
   wor <- pops.sdm::state(c('Washington', 'Oregon', 'California',
                            'Arizona', 'Nevada', 'Utah', 'Idaho',
@@ -59,6 +65,8 @@ getWOR <- function(){
   ))
   return(wor)
 }
+
+#' @export
 
 getMILP <- function(){
   milp <- pops.sdm::county(state='Michigan', names=c('Alcona', 'Montmorency', 'Oscoda', 'Cass',
