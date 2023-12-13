@@ -14,7 +14,7 @@ run_SDM <- function(spname, domain=world(), res){
   #if(sources(domain)==sources(world())){
   domain <- pops.sdm::l48()
   domain <- pops.sdm::state(c('Oregon'))
-
+  #domain <- pops.sdm::e
   #domain <- pops.sdm::county(state='Oregon', names=c('Coos', 'Curry', 'Douglas', 'Jackson', 'Josephine'))
   spname <- "Notholithocarpus densiflorus"; myName <- stringr::str_replace(tolower(spname),' ', '_')
   res <- 33
