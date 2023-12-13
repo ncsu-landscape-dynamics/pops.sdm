@@ -23,12 +23,12 @@ run_SDM <- function(spname, domain=world(), res){
 
   #### 1.1 Gather Environmental Data ####
   envi.vars <- pops.sdm::get_Envi(bio=T, lc=T, ptime=F, soil=T, pop=F, elev=T, res=res)
-  envi.vars <- pops.sdm::get_Envi(bio=T, lc=T, ptime=F, soil=T, pop=F, elev=T, res=250)
+  envi.vars <- pops.sdm::get_Envi(bio=T, lc=F, ptime=F, soil=T, pop=F, elev=T, res=250)
   base.r <- terra::crop(x=pops.sdm::rasterbase(res=res), y=domain, mask=T)
   base.r <- terra::subst(base.r, from=0, to=NA)
 
-  if(res>100){envi.r <- terra::crop(x=envi.vars$rast, y=domain, mask=T); envi.r <- envi.r*base.r}
-  if(res<=100){
+  if(res>250){envi.r <- terra::crop(x=envi.vars$rast, y=domain, mask=T); envi.r <- envi.r*base.r}
+  if(res<=250){
     if(!file.exists(paste(dir, '/envi/envi.', terra::nrow(base.r), terra::ncol(base.r), terra::nlyr(envi.vars$rast), '.tif', sep=''))){
       envi.r <- terra::crop(x=envi.vars$rast, y=domain, mask=T)
       envi.r <- envi.r*base.r
@@ -66,10 +66,9 @@ run_SDM <- function(spname, domain=world(), res){
 
   #### 2.0 Run variable selection function to choose the ideal variables ####
   # if(!file.exists(paste(dir, '/envi/envi.best', terra::nrow(base.r), terra::ncol(base.r), terra::nlyr(envi.vars$rast), '.tif', sep=''))){
-  envi.best <- get_BestVars(envi=envi.r, pts=pts.r, clust=envi.vars$clust)
-  terra::writeRaster(envi.best, paste(dir, '/envi/envi.best', terra::nrow(base.r), terra::ncol(base.r), terra::nlyr(envi.vars$rast), '.tif', sep=''))
+  envi.best <- pops.sdm::get_BestVars(envi=envi.r, pts=pts.r, clust=envi.vars$clust)
+  terra::writeRaster(envi.best, paste(dir, '/envi/envi.best_', spname, '_', terra::nrow(base.r), terra::ncol(base.r), terra::nlyr(envi.vars$rast), '.tif', sep=''))
   # }
-  #
   # if(file.exists(paste(dir, '/envi/envi.best', terra::nrow(base.r), terra::ncol(base.r), terra::nlyr(envi.vars$rast), '.tif', sep=''))){
   #   envi.best <- raster::stack(terra::rast(paste(dir, '/envi/envi.best', terra::nrow(base.r), terra::ncol(base.r), terra::nlyr(envi.vars$rast), '.tif', sep='')))
   # }
@@ -77,8 +76,7 @@ run_SDM <- function(spname, domain=world(), res){
   pts.2 <- pts.r!=is.na(pts.r)
   myResp <- terra::values(pts.2)
   myPA <- ifelse(myResp == 1, TRUE, FALSE)
-  myPAtable <- data.frame(PA1 = myPA, PA2 = myPA, PA3 = myPA, PA4 = myPA, PA5 = myPA,
-                          PA6 = myPA, PA7 = myPA, PA8 = myPA, PA9 = myPA, PA10 = myPA)
+  myPAtable <- data.frame(PA1 = myPA, PA2 = myPA, PA3 = myPA)#, PA4 = myPA, PA5 = myPA)
   pa.x <- vector()
   for (i in 1:ncol(myPAtable)){
     pa.s <- sample(which(myPAtable[, i] == FALSE), length(pts.t)*3)
@@ -113,8 +111,11 @@ run_SDM <- function(spname, domain=world(), res){
                                        modeling.id = paste(myName,"AllModels",sep=""),
                                        models = myAlgos,
                                        bm.options = myOptions,
-                                       CV.strategy='kfold',
-                                       CV.k=5,
+                                       CV.strategy = 'random',
+                                       CV.nb.rep = 3,
+                                       CV.perc = .67,
+                                       # CV.strategy='kfold',
+                                       # CV.k=5,
                                        metric.eval = myEvals,
                                        var.import = 0,
                                        #SaveObj = T,
@@ -132,9 +133,6 @@ run_SDM <- function(spname, domain=world(), res){
                                        #models.chosen = mysub,
                                        #compress = 'xz',
                                        build.clamping.mask = F,
-                                       output.format = '.tif',
-                                       #do.stack=T
-                                       #nb.cpu=parallel::detectCores()/2, #doesn't work on windows
                                        binary.meth = NULL)
   myProj2 <- biomod2::get_predictions(myProj) # if you want to make custom plots, you can also get the projected map
 
