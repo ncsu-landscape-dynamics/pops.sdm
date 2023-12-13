@@ -2,6 +2,11 @@
 
 export(country)
 export(county)
+export(getEOM)
+export(getEOR)
+export(getMILP)
+export(getWOM)
+export(getWOR)
 export(get_BestVars)
 export(get_Envi)
 export(get_pts.1)
