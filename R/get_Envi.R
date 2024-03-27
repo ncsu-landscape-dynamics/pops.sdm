@@ -454,5 +454,6 @@ get_Envi <- function(bio=F, elev=F, gdd=F, lc=F, pop=F, ptime=F, rnr=F, soil=F, 
   clst <- rbind(biocl, elevcl, gddcl, lccl, popcl, timecl, rnrcl, solcl)
   clst$cluster <- as.integer(as.factor(clst$cluster))
   cl2 <- clst$cluster; names(cl2) <- gsub(' ', '.', clst$var)
-  return(list('rast'=envi, 'clust'=cl2))
+  #return(list('rast'=envi, 'clust'=cl2))
+  return(envi)
 }
