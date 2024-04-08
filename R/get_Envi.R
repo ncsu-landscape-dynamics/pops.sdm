@@ -197,8 +197,8 @@ get_Envi <- function(bio=F, elev=F, gdd=F, lc=F, pop=F, ptime=F, rnr=F, soil=F, 
         terra::writeRaster(shrub, filename=paste(lcpath, 'shrub.tif', sep=''))
         terra::writeRaster(trees, filename=paste(lcpath, 'trees.tif', sep=''))
         terra::writeRaster(wetld, filename=paste(lcpath, 'wetld.tif', sep=''))
-        lcvar <- c(built, cropl, grass, shrub, trees, wetld)
       }
+      lcvar <- c(built, cropl, grass, shrub, trees, wetld)
     }
     if(res<1000){
       lcpath <- paste(geodir, 'USA\\landcover\\', sep='')
@@ -411,6 +411,7 @@ get_Envi <- function(bio=F, elev=F, gdd=F, lc=F, pop=F, ptime=F, rnr=F, soil=F, 
         if(!dir.exists(soldir)){dir.create(soldir); i <- 1
         for(i in i:terra::nlyr(solvar)){
           i.solagg <- terra::aggregate(solvar[[i]], fact=(res/250), fun='mean')
+          i.solagg <- terra::project(solvar[[i]], base.rast, threads=T)
           terra::writeRaster(i.solagg, filename=paste(soldir, names(solvar)[[i]], '_', res, 'm.tif', sep=''))
         }
         }
