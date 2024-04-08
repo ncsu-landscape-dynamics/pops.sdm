@@ -199,6 +199,7 @@ get_Envi <- function(bio=F, elev=F, gdd=F, lc=F, pop=F, ptime=F, rnr=F, soil=F, 
         terra::writeRaster(wetld, filename=paste(lcpath, 'wetld.tif', sep=''))
       }
       lcvar <- c(built, cropl, grass, shrub, trees, wetld)
+      names(lcvar) <- c('built', 'cropl', 'grass', 'shrub', 'trees', 'wetld')
     }
     if(res<1000){
       lcpath <- paste(geodir, 'USA\\landcover\\', sep='')
@@ -295,14 +296,14 @@ get_Envi <- function(bio=F, elev=F, gdd=F, lc=F, pop=F, ptime=F, rnr=F, soil=F, 
         # if(file.exists(paste(lcpath, 'ncld_2019_', res, 'm.tif', sep=''))){
         #   lcvar <- terra::rast(paste(lcpath, 'ncld_2019_', res, 'm.tif', sep=''))
         # }
-
+        names(lcvar) <- 'landcover'
       }
     }
     #lcvar$nlcd_2019_land_cover_l48_20210604 <- terra::subst(lcvar$nlcd_2019_land_cover_l48_20210604, from=0, to=NA)
     # lccl$cluster[which(lccl$var%in%c('built'))] <- 'Development'
     # lccl$cluster[which(lccl$var%in%c('decid', 'everg', 'trees', 'shrub', 'grass', 'wetld'))] <- 'Vegetation'
     # lccl$cluster[which(lccl$var%in%c('pastr', 'cropl', 'culti'))] <- 'Agriculture'
-    names(lcvar) <- 'landcover'
+
     lccl <- data.frame(var='landcover', cluster='Landcover 1')
   }
 
