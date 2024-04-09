@@ -145,8 +145,9 @@ get_Envi <- function(bio=F, elev=F, gdd=F, lc=F, pop=F, ptime=F, rnr=F, soil=F, 
     elevcl <- data.frame(var=names(elevvar), cluster=c('Elevation 1', 'Elevation 2'))
   }
 
-  if(gdd==T){gddkey <- 'gdd'
+  if(gdd==T){
     if(exists('tbase')==F){tbase <- 5}
+    gddkey <- paste('gdd', tbase, sep='')
     getGDD <- function(tbase){
       gdpath <- paste(paste(geodir, 'Global\\',sep=''), 'gdd.base', tbase, '.tif', sep='')
       if(!file.exists(gdpath)){print('Calculating GDD')
@@ -172,7 +173,7 @@ get_Envi <- function(bio=F, elev=F, gdd=F, lc=F, pop=F, ptime=F, rnr=F, soil=F, 
     gddcl <- data.frame(var=names(gddvar), cluster='Temp 1')
   }
 
-  if(lc==T){lckey <- 'landc'
+  if(lc==T){lckey <- 'land'
     if(res>=1000){
       lcpath <- paste(geodir, 'Global\\landcover\\', sep='')
       if(dir.exists(lcpath)){
@@ -307,7 +308,7 @@ get_Envi <- function(bio=F, elev=F, gdd=F, lc=F, pop=F, ptime=F, rnr=F, soil=F, 
     lccl <- data.frame(var='landcover', cluster='Landcover 1')
   }
 
-  if(pop==T){popkey <- 'popl'
+  if(pop==T){popkey <- 'pop'
     if(res>=1000){popvar <- geodata::population(year='2020', res=.5, path=paste(geodir, 'Global\\',sep=''))}
     if(res<1000){
       if(!file.exists(paste(geodir, 'USA\\GHS_POP_E2020_USA_R2023A_4326_3ss_V1_0.tif', sep=''))){
