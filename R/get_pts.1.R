@@ -10,7 +10,7 @@ get_pts.1 <- function(spname, domain=NULL){
   if(is.null(domain)){x0 <- terra::ext(c(-180, 180, -90, 90)); bb <- c(x0[3], x0[1], x0[4], x0[2])}
   if(!is.null(domain)){x1 <- terra::ext(domain); bb <- c(x1[3], x1[1], x1[4], x1[2])}
 
-  sp.inat <- rinat::get_inat_obs(taxon_name=spname, maxresults=9999, quality='research', geo=T, bounds=bb)
+  sp.inat <- rinat::get_inat_obs(taxon_name=spname, maxresults=9999, quality='research', bounds=bb)
 
   if(grepl(' ', spname)){
     sp.bien <- BIEN::BIEN_occurrence_species(species=spname, natives.only = F)
