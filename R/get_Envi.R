@@ -8,7 +8,7 @@ get_Envi <- function(bio=F, elev=F, gdd=F, lc=F, pop=F, ptime=F, rnr=F, soil=F, 
   geodir <- 'Q:\\Shared drives\\Data\\Raster\\'
   base.rast <- pops.sdm::rasterbase(res=res)
 
-  if(bio==T){
+  if(bio==T){biokey <- 'bio'
     if(res>=1000){biovar <- geodata::worldclim_global(var='bio', res=.5, path=paste(geodir, 'Global\\',sep=''))}
     if(res<1000){
       if(!file.exists(paste(geodir, 'USA\\bioclim\\500m\\BioClimComposite_1971_2000_15s.tif', sep=''))){
@@ -66,7 +66,7 @@ get_Envi <- function(bio=F, elev=F, gdd=F, lc=F, pop=F, ptime=F, rnr=F, soil=F, 
                                        'Precip.Driest.Quarter'))] <- 'Precip 2'
   }
 
-  if(elev==T){
+  if(elev==T){elevkey <- 'elev'
     if(res>=1000){
       elevvar <- geodata::elevation_global(res=.5, path=paste(geodir, 'Global\\',sep=''))
       names(elevvar) <- 'Elevation'
@@ -145,7 +145,7 @@ get_Envi <- function(bio=F, elev=F, gdd=F, lc=F, pop=F, ptime=F, rnr=F, soil=F, 
     elevcl <- data.frame(var=names(elevvar), cluster=c('Elevation 1', 'Elevation 2'))
   }
 
-  if(gdd==T){
+  if(gdd==T){gddkey <- 'gdd'
     if(exists('tbase')==F){tbase <- 5}
     getGDD <- function(tbase){
       gdpath <- paste(paste(geodir, 'Global\\',sep=''), 'gdd.base', tbase, '.tif', sep='')
@@ -172,7 +172,7 @@ get_Envi <- function(bio=F, elev=F, gdd=F, lc=F, pop=F, ptime=F, rnr=F, soil=F, 
     gddcl <- data.frame(var=names(gddvar), cluster='Temp 1')
   }
 
-  if(lc==T){
+  if(lc==T){lckey <- 'landc'
     if(res>=1000){
       lcpath <- paste(geodir, 'Global\\landcover\\', sep='')
       if(dir.exists(lcpath)){
@@ -307,7 +307,7 @@ get_Envi <- function(bio=F, elev=F, gdd=F, lc=F, pop=F, ptime=F, rnr=F, soil=F, 
     lccl <- data.frame(var='landcover', cluster='Landcover 1')
   }
 
-  if(pop==T){
+  if(pop==T){popkey <- 'popl'
     if(res>=1000){popvar <- geodata::population(year='2020', res=.5, path=paste(geodir, 'Global\\',sep=''))}
     if(res<1000){
       if(!file.exists(paste(geodir, 'USA\\GHS_POP_E2020_USA_R2023A_4326_3ss_V1_0.tif', sep=''))){
@@ -341,7 +341,7 @@ get_Envi <- function(bio=F, elev=F, gdd=F, lc=F, pop=F, ptime=F, rnr=F, soil=F, 
     names(popvar) <- 'Population'; popcl <- data.frame(var=names(popvar), cluster='Development')
   }
 
-  if(ptime==T){
+  if(ptime==T){ptimekey <- 'ptime'
     getPrecipTiming <- function(){
       if(res==1000){ptpath <- paste(geodir, 'Global\\precip_timing.tif', sep='')}
       if(res<1000){ptpath <- paste(geodir, 'USA\\precip_timing_', res, 'm.tif', sep='')}
@@ -361,13 +361,13 @@ get_Envi <- function(bio=F, elev=F, gdd=F, lc=F, pop=F, ptime=F, rnr=F, soil=F, 
     timecl <- data.frame(var=names(timevar), cluster='Precip 2')
   }
 
-  if(rnr==T){
+  if(rnr==T){rnrkey <- 'rnr'
     rnrvar <- terra::rast(list.files(paste(geodir, 'Global\\',sep=''), '.dist.wrld', full.names = T))
     names(rnrvar) <- c('Road.Dist', 'Rail.Dist')
     rnrcl <- data.frame(var=names(rnrvar), cluster='Roads/Rails')
   }
 
-  if(soil==T){
+  if(soil==T){soilkey <- 'soil'
     if(res<1000){
       if(any(grepl('.mean', list.files(paste(geodir, 'USA\\soils\\250m\\', sep=''))))==F){
         if(any(grepl('.mean', list.files(paste(geodir, 'Global\\soils\\250m\\', sep=''))))==F){
@@ -435,17 +435,17 @@ get_Envi <- function(bio=F, elev=F, gdd=F, lc=F, pop=F, ptime=F, rnr=F, soil=F, 
     solcl <- data.frame(var=names(solvar), cluster='Soil')
   }
 
-  if(bio==F){biovar <- NULL; biocl <- NULL}
-  if(elev==F){elevvar <- NULL; elevcl <- NULL}
-  if(gdd==F){gddvar <- NULL; gddcl <- NULL}
-  if(lc==F){lcvar <- NULL; lccl <- NULL}
-  if(pop==F){popvar <- NULL; popcl <- NULL}
-  if(ptime==F){timevar <- NULL; timecl <- NULL}
-  if(rnr==F){rnrvar <- NULL; rnrcl <- NULL}
-  if(soil==F){solvar <- NULL; solcl <- NULL}
+  if(bio==F){biovar <- NULL; biocl <- NULL; biokey <- NULL}
+  if(elev==F){elevvar <- NULL; elevcl <- NULL; elevkey <- NULL}
+  if(gdd==F){gddvar <- NULL; gddcl <- NULL; gddkey <- NULL}
+  if(lc==F){lcvar <- NULL; lccl <- NULL; lckey <- NULL}
+  if(pop==F){popvar <- NULL; popcl <- NULL; popkey <- NULL}
+  if(ptime==F){timevar <- NULL; timecl <- NULL; ptimekey <- NULL}
+  if(rnr==F){rnrvar <- NULL; rnrcl <- NULL; rnrkey <- NULL}
+  if(soil==F){solvar <- NULL; solcl <- NULL; soilkey <- NULL}
 
   envi <- terra::rast(terra::as.list(c(biovar, elevvar, gddvar, lcvar, popvar, timevar, rnrvar, solvar)))
-
+  envi.key <- paste(biokey, elevkey, gddkey, lckey, popkey, ptimekey, rnrkey, soilkey, sep='')
   # if(lc==T){
   #   lvls.all <- data.frame(id=c(0, 12, 21, 22, 23, 24, 31, 41, 42, 43, 52, 71, 81, 82, 90, 95),
   #                          landcover=as.factor(c('Water', 'Ice', 'Dev_1', 'Dev_2', 'Dev_3', 'Dev_4', 'Barren', 'Decid', 'Everg',
@@ -457,5 +457,6 @@ get_Envi <- function(bio=F, elev=F, gdd=F, lc=F, pop=F, ptime=F, rnr=F, soil=F, 
   clst$cluster <- as.integer(as.factor(clst$cluster))
   cl2 <- clst$cluster; names(cl2) <- gsub(' ', '.', clst$var)
   #return(list('rast'=envi, 'clust'=cl2))
-  return(envi)
+  envi.out <- list(envi); names(envi.out) <- envi.key
+  return(envi.out)
 }
