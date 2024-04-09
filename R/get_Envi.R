@@ -167,7 +167,7 @@ get_Envi <- function(bio=F, elev=F, gdd=F, lc=F, pop=F, ptime=F, rnr=F, soil=F, 
         }
         if(file.exists(gdpath)){g1 <- terra::rast(gdpath)}
       }
-      names(g1) <- paste('GDD ', tbase, sep=''); return(g1)
+      names(g1) <- paste('GDD.', tbase, sep=''); return(g1)
     }
     gddvar <- getGDD(tbase)
     gddcl <- data.frame(var=names(gddvar), cluster='Temp 1')
@@ -308,7 +308,7 @@ get_Envi <- function(bio=F, elev=F, gdd=F, lc=F, pop=F, ptime=F, rnr=F, soil=F, 
     lccl <- data.frame(var='landcover', cluster='Landcover 1')
   }
 
-  if(pop==T){popkey <- 'pop'
+  if(pop==T){popkey <- 'popl'
     if(res>=1000){popvar <- geodata::population(year='2020', res=.5, path=paste(geodir, 'Global\\',sep=''))}
     if(res<1000){
       if(!file.exists(paste(geodir, 'USA\\GHS_POP_E2020_USA_R2023A_4326_3ss_V1_0.tif', sep=''))){
