@@ -303,7 +303,7 @@ get_Envi <- function(bio=F, elev=F, gdd=F, lc=F, pop=F, ptime=F, rnr=F, soil=F, 
         }
         if(file.exists(paste(lcpath, 'nlcd_2019_15s.tif', sep=''))){
           lcvar <- terra::rast(paste(lcpath, 'nlcd_2019_15s.tif', sep=''))
-          names(lcvar) <- c('built', 'cropl', 'grass', 'shrub', 'trees', 'wetld')
+          names(lcvar) <- c('built', 'decid', 'everg', 'trees', 'shrub', 'grass', 'pastr', 'cropl', 'culti', 'wetld')
         }
       }
     }
