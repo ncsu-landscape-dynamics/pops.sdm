@@ -322,7 +322,7 @@ get_Envi <- function(bio=F, elev=F, gdd=F, lc=F, pop=F, ptime=F, rnr=F, soil=F, 
     #   lcvar <- terra::rast(paste(lcpath, 'ncld_2019_', res, 'm.tif', sep=''))
     # }
   }
-  }
+
   #lcvar$nlcd_2019_land_cover_l48_20210604 <- terra::subst(lcvar$nlcd_2019_land_cover_l48_20210604, from=0, to=NA)
   # lccl$cluster[which(lccl$var%in%c('built'))] <- 'Development'
   # lccl$cluster[which(lccl$var%in%c('decid', 'everg', 'trees', 'shrub', 'grass', 'wetld'))] <- 'Vegetation'
