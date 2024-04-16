@@ -263,7 +263,7 @@ get_Envi <- function(bio=F, elev=F, gdd=F, lc=F, pop=F, ptime=F, rnr=F, soil=F, 
         }
       }
       if(res==500){
-        if(!file.exists(paste(lcpath, 'nlcdvars_2019_15s.tif', sep=''))){
+        if(!file.exists(paste(lcpath, 'nlcd_2019_15s.tif', sep=''))){
           built <- terra::aggregate(terra::rast(paste(lcpath, 'nlcd_2019_1s_built_21_22_23_24.tif', sep='')), fact=15, fun='modal')
           cropl <- terra::aggregate(terra::rast(paste(lcpath, 'nlcd_2019_1s_cropl_82.tif', sep='')), fact=15, fun='modal')
           culti <- terra::aggregate(terra::rast(paste(lcpath, 'nlcd_2019_1s_culti_81_82.tif', sep='')), fact=15, fun='modal')
@@ -301,8 +301,8 @@ get_Envi <- function(bio=F, elev=F, gdd=F, lc=F, pop=F, ptime=F, rnr=F, soil=F, 
           # i <- 1
           # for(i in i:length(vars)){lcvars[[i]] <- lc.sum(lc, var=vars[[i]])}
         }
-        if(file.exists(paste(lcpath, 'nlcdvars_2019_15s.tif', sep=''))){
-          lcvar <- terra::rast(paste(lcpath, 'nlcdvars_2019_15s.tif', sep=''))
+        if(file.exists(paste(lcpath, 'nlcd_2019_15s.tif', sep=''))){
+          lcvar <- terra::rast(paste(lcpath, 'nlcd_2019_15s.tif', sep=''))
           names(lcvar) <- c('built', 'cropl', 'grass', 'shrub', 'trees', 'wetld')
         }
       }
