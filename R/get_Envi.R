@@ -329,169 +329,263 @@ get_Envi <- function(bio=F, elev=F, gdd=F, lc=F, pop=F, ptime=F, rnr=F, soil=F, 
   # lccl$cluster[which(lccl$var%in%c('pastr', 'cropl', 'culti'))] <- 'Agriculture'
 
   lccl <- data.frame(var='landcover', cluster='Landcover 1')
-}
-
-if(pop==T){popkey <- 'popl'
-if(res>=1000){popvar <- geodata::population(year='2020', res=.5, path=paste(geodir, 'Global\\',sep=''))}
-if(res<1000){
-  if(!file.exists(paste(geodir, 'USA\\GHS_POP_E2020_USA_R2023A_4326_3ss_V1_0.tif', sep=''))){
-    popvar <- terra::rast(paste(geodir, 'Global\\pop\\GHS_POP_E2020_GLOBE_R2023A_4326_3ss_V1_0.tif', sep=''))
-    popvar.c <- terra::crop(popvar, terra::ext(pops.sdm::l48()))
-    popvar.m <- terra::crop(x=popvar.c, y=pops.sdm::l48(), mask=T)
-    terra::writeRaster(popvar.m, paste(geodir, 'USA\\GHS_POP_E2020_USA_R2023A_4326_3ss_V1_0.tif', sep=''))
-  }
-  if(file.exists(paste(geodir, 'USA\\GHS_POP_E2020_USA_R2023A_4326_3ss_V1_0.tif', sep=''))){
-    popvar <- terra::rast(paste(geodir, 'USA\\GHS_POP_E2020_USA_R2023A_4326_3ss_V1_0.tif', sep=''))
-  }
-  if(res>100){
-    if(!file.exists(paste(geodir, 'USA\\GHS_POP_E2020_USA_R2023A_4326_', res, 'm.tif', sep=''))){
-      popagg <- terra::project(popvar, base.rast, threads=T) #popagg <- terra::aggregate(popvar, fact=(res/100), fun='mean')
-      terra::writeRaster(popagg, paste(geodir, 'USA\\GHS_POP_E2020_USA_R2023A_4326_', res, 'm.tif', sep=''))
-    }
-    if(file.exists(paste(geodir, 'USA\\GHS_POP_E2020_USA_R2023A_4326_', res, 'm.tif', sep=''))){
-      popvar <- terra::rast(paste(geodir, 'USA\\GHS_POP_E2020_USA_R2023A_4326_', res, 'm.tif', sep=''))
-    }
-  }
-  if(res<100){
-    if(!file.exists(paste(geodir, 'USA\\GHS_POP_E2020_USA_R2023A_4326_', res, 'm.tif', sep=''))){
-      popdis <- terra::project(popvar, base.rast, threads=T)
-      terra::writeRaster(popdis, paste(geodir, 'USA\\GHS_POP_E2020_USA_R2023A_4326_', res, 'm.tif', sep=''))
-    }
-    if(file.exists(paste(geodir, 'USA\\GHS_POP_E2020_USA_R2023A_4326_', res, 'm.tif', sep=''))){
-      popvar <- terra::rast(paste(geodir, 'USA\\GHS_POP_E2020_USA_R2023A_4326_', res, 'm.tif', sep=''))
-    }
-  }
-}
-names(popvar) <- 'Population'; popcl <- data.frame(var=names(popvar), cluster='Development')
-}
-
-if(ptime==T){ptimekey <- 'ptime'
-getPrecipTiming <- function(){
-  if(res==1000){ptpath <- paste(geodir, 'Global\\precip_timing.tif', sep='')}
-  if(res<1000){ptpath <- paste(geodir, 'USA\\precip_timing_', res, 'm.tif', sep='')}
-  if(file.exists(ptpath)){prect <- terra::rast(ptpath)}
-  if(!file.exists(ptpath)){print('Calculating Precip Timing (DJF-JJA)')
-    prec <- geodata::worldclim_global(var='prec', res=.5, path=paste(geodir, 'Global\\',sep=''))
-    if(res<1000){
-      prec <- terra::project(prec, base.rast, threads=T)
-    }
-    prect <- terra::app(x=prec, cores=parallel::detectCores()/2,
-                        fun=function(x){return(sum(x[[12]], x[[1]], x[[2]])-sum(x[[6]], x[[7]], x[[8]]))})
-    terra::writeRaster(prect, filename=ptpath); closeAllConnections()
-  }
-  names(prect) <- 'Precip.Timing'; return(prect)
-}
-timevar <- getPrecipTiming()
-timecl <- data.frame(var=names(timevar), cluster='Precip 2')
-}
-
-if(rnr==T){rnrkey <- 'rnr'
-rnrvar <- terra::rast(list.files(paste(geodir, 'Global\\',sep=''), '.dist.wrld', full.names = T))
-if(res<1000){
-  if(res==500){
-    if(!file.exists(paste(geodir, 'USA\\rnr_15s.tif', sep=''))){
-    rnragg <- terra::project(rnrvar, base.rast, threads=T)
-    terra::writeRaster(rnragg, filename=paste(geodir, 'USA\\rnr_15s.tif', sep=''))
-    }
-    if(file.exists(paste(geodir, 'USA\\rnr_15s.tif', sep=''))){
-      rnrvar <- terra::rast(paste(geodir, 'USA\\rnr_15s.tif', sep=''))
-    }
   }
 
-  names(rnrvar) <- c('Road.Dist', 'Rail.Dist')
-  rnrcl <- data.frame(var=names(rnrvar), cluster='Roads/Rails')
-}
-
-if(soil==T){soilkey <- 'soil'
-if(res<1000){
-  if(any(grepl('.mean', list.files(paste(geodir, 'USA\\soils\\250m\\', sep=''))))==F){
-    if(any(grepl('.mean', list.files(paste(geodir, 'Global\\soils\\250m\\', sep=''))))==F){
-      var <- c('ph.h2o', '1500kPa', '33kPa'); i <- 1
-      for(i in i:length(type)){
-        sl <- lapply(list.files(path=paste(geodir, 'Global\\soils\\250m\\', sep=''), pattern=var[i], full.names=T), terra::rast)
-        sl.mean <- terra::mean(sl[[1]], sl[[2]], sl[[3]], sl[[4]], sl[[5]], sl[[6]])
-        writeRaster(sl.mean, paste('C:\\Users\\bjselige\\Desktop\\Soil_OpenLandMap\\', var[i], '.mean.tif', sep=''))
+  if(pop==T){popkey <- 'popl'
+  if(res>=1000){popvar <- geodata::population(year='2020', res=.5, path=paste(geodir, 'Global\\',sep=''))}
+  if(res<1000){
+    if(!file.exists(paste(geodir, 'USA\\GHS_POP_E2020_USA_R2023A_4326_3ss_V1_0.tif', sep=''))){
+      popvar <- terra::rast(paste(geodir, 'Global\\pop\\GHS_POP_E2020_GLOBE_R2023A_4326_3ss_V1_0.tif', sep=''))
+      popvar.c <- terra::crop(popvar, terra::ext(pops.sdm::l48()))
+      popvar.m <- terra::crop(x=popvar.c, y=pops.sdm::l48(), mask=T)
+      terra::writeRaster(popvar.m, paste(geodir, 'USA\\GHS_POP_E2020_USA_R2023A_4326_3ss_V1_0.tif', sep=''))
+    }
+    if(file.exists(paste(geodir, 'USA\\GHS_POP_E2020_USA_R2023A_4326_3ss_V1_0.tif', sep=''))){
+      popvar <- terra::rast(paste(geodir, 'USA\\GHS_POP_E2020_USA_R2023A_4326_3ss_V1_0.tif', sep=''))
+    }
+    if(res>100){
+      if(!file.exists(paste(geodir, 'USA\\GHS_POP_E2020_USA_R2023A_4326_', res, 'm.tif', sep=''))){
+        popagg <- terra::project(popvar, base.rast, threads=T) #popagg <- terra::aggregate(popvar, fact=(res/100), fun='mean')
+        terra::writeRaster(popagg, paste(geodir, 'USA\\GHS_POP_E2020_USA_R2023A_4326_', res, 'm.tif', sep=''))
+      }
+      if(file.exists(paste(geodir, 'USA\\GHS_POP_E2020_USA_R2023A_4326_', res, 'm.tif', sep=''))){
+        popvar <- terra::rast(paste(geodir, 'USA\\GHS_POP_E2020_USA_R2023A_4326_', res, 'm.tif', sep=''))
       }
     }
-    if(any(grepl('.mean', list.files(paste(geodir, 'Global\\soils\\250m\\', sep=''))))){
-      file <- c('ph.mean', '1500kPa.mean', '33kPa.mean'); i <- 1
-      for(i in i:length(file)){
-        sl.mean <- terra::rast(paste(geodir, 'Global\\soils\\250m\\', file[i], '.tif', sep=''))
-        sl.crop <- terra::crop(sl.mean, terra::ext(pops.sdm::l48()))
-        sl.mask <- terra::crop(sl.crop, y=pops.sdm::l48(), mask=T)
-        terra::writeRaster(sl.mask, paste(geodir, 'USA\\soils\\250m\\', file[i], '.tif', sep=''))
+    if(res<100){
+      if(!file.exists(paste(geodir, 'USA\\GHS_POP_E2020_USA_R2023A_4326_', res, 'm.tif', sep=''))){
+        popdis <- terra::project(popvar, base.rast, threads=T)
+        terra::writeRaster(popdis, paste(geodir, 'USA\\GHS_POP_E2020_USA_R2023A_4326_', res, 'm.tif', sep=''))
+      }
+      if(file.exists(paste(geodir, 'USA\\GHS_POP_E2020_USA_R2023A_4326_', res, 'm.tif', sep=''))){
+        popvar <- terra::rast(paste(geodir, 'USA\\GHS_POP_E2020_USA_R2023A_4326_', res, 'm.tif', sep=''))
       }
     }
   }
-  if(any(grepl('.mean', list.files(paste(geodir, 'USA\\soils\\250m\\', sep=''))))){
-    solvar <- terra::rast(list.files(paste(geodir, 'USA\\soils\\250m\\', sep=''), pattern='.mean.', full.names=T))
+  names(popvar) <- 'Population'; popcl <- data.frame(var=names(popvar), cluster='Development')
+  }
+
+  if(ptime==T){ptimekey <- 'ptime'
+  getPrecipTiming <- function(){
+    if(res==1000){ptpath <- paste(geodir, 'Global\\precip_timing.tif', sep='')}
+    if(res<1000){ptpath <- paste(geodir, 'USA\\precip_timing_', res, 'm.tif', sep='')}
+    if(file.exists(ptpath)){prect <- terra::rast(ptpath)}
+    if(!file.exists(ptpath)){print('Calculating Precip Timing (DJF-JJA)')
+      prec <- geodata::worldclim_global(var='prec', res=.5, path=paste(geodir, 'Global\\',sep=''))
+      if(res<1000){
+        prec <- terra::project(prec, base.rast, threads=T)
+      }
+      prect <- terra::app(x=prec, cores=parallel::detectCores()/2,
+                          fun=function(x){return(sum(x[[12]], x[[1]], x[[2]])-sum(x[[6]], x[[7]], x[[8]]))})
+      terra::writeRaster(prect, filename=ptpath); closeAllConnections()
+    }
+    names(prect) <- 'Precip.Timing'; return(prect)
+  }
+  timevar <- getPrecipTiming()
+  timecl <- data.frame(var=names(timevar), cluster='Precip 2')
+  }
+
+  if(rnr==T){rnrkey <- 'rnr'
+  rnrvar <- terra::rast(list.files(paste(geodir, 'Global\\',sep=''), '.dist.wrld', full.names = T))
+  if(res<1000){
+    if(res==500){
+      if(!file.exists(paste(geodir, 'USA\\rnr_15s.tif', sep=''))){
+        rnragg <- terra::project(rnrvar, base.rast, threads=T)
+        terra::writeRaster(rnragg, filename=paste(geodir, 'USA\\rnr_15s.tif', sep=''))
+      }
+      if(file.exists(paste(geodir, 'USA\\rnr_15s.tif', sep=''))){
+        rnrvar <- terra::rast(paste(geodir, 'USA\\rnr_15s.tif', sep=''))
+      }
+    }
+
+    names(rnrvar) <- c('Road.Dist', 'Rail.Dist')
+    rnrcl <- data.frame(var=names(rnrvar), cluster='Roads/Rails')
+  }
+
+  if(soil==T){soilkey <- 'soil'
+  if(res<1000){
+    if(any(grepl('.mean', list.files(paste(geodir, 'USA\\soils\\250m\\', sep=''))))==F){
+      if(any(grepl('.mean', list.files(paste(geodir, 'Global\\soils\\250m\\', sep=''))))==F){
+        var <- c('ph.h2o', '1500kPa', '33kPa'); i <- 1
+        for(i in i:length(type)){
+          sl <- lapply(list.files(path=paste(geodir, 'Global\\soils\\250m\\', sep=''), pattern=var[i], full.names=T), terra::rast)
+          sl.mean <- terra::mean(sl[[1]], sl[[2]], sl[[3]], sl[[4]], sl[[5]], sl[[6]])
+          writeRaster(sl.mean, paste('C:\\Users\\bjselige\\Desktop\\Soil_OpenLandMap\\', var[i], '.mean.tif', sep=''))
+        }
+      }
+      if(any(grepl('.mean', list.files(paste(geodir, 'Global\\soils\\250m\\', sep=''))))){
+        file <- c('ph.mean', '1500kPa.mean', '33kPa.mean'); i <- 1
+        for(i in i:length(file)){
+          sl.mean <- terra::rast(paste(geodir, 'Global\\soils\\250m\\', file[i], '.tif', sep=''))
+          sl.crop <- terra::crop(sl.mean, terra::ext(pops.sdm::l48()))
+          sl.mask <- terra::crop(sl.crop, y=pops.sdm::l48(), mask=T)
+          terra::writeRaster(sl.mask, paste(geodir, 'USA\\soils\\250m\\', file[i], '.tif', sep=''))
+        }
+      }
+    }
+    if(any(grepl('.mean', list.files(paste(geodir, 'USA\\soils\\250m\\', sep=''))))){
+      solvar <- terra::rast(list.files(paste(geodir, 'USA\\soils\\250m\\', sep=''), pattern='.mean.', full.names=T))
+      names(solvar) <- c('soil.1500kPa.mean', 'soil.33kPa.mean', 'soil.ph.mean')
+    }
+
+    if(res<250){
+      soldir <- paste(geodir, 'USA\\soils\\', res, 'm\\', sep='')
+      if(!dir.exists(soldir)){dir.create(soldir)}
+      if(dir.exists(soldir)){
+        if(length(list.files(soldir))<3){i <- 1
+        for(i in i:terra::nlyr(solvar)){print(i)
+          i.sol <- terra::project(solvar[[i]], base.rast, threads=T)
+          terra::writeRaster(i.sol, filename=paste(soldir, names(solvar)[[i]], '_', res, 'm.tif', sep=''))
+        }
+        }
+        if(!length(list.files(soldir))<3){solvar <- terra::rast(list.files(soldir, full.names=T))}
+      }
+    }
+
+    if(res>250){
+      soldir <- paste(geodir, 'USA\\soils\\', res, 'm\\', sep='')
+      if(!dir.exists(soldir)){dir.create(soldir); i <- 1
+      for(i in i:terra::nlyr(solvar)){
+        i.solagg <- terra::aggregate(solvar[[i]], fact=(res/250), fun='mean')
+        i.solagg <- terra::project(solvar[[i]], base.rast, threads=T)
+        terra::writeRaster(i.solagg, filename=paste(soldir, names(solvar)[[i]], '_', res, 'm.tif', sep=''))
+      }
+      }
+      if(dir.exists(soldir)){solvar <- terra::rast(list.files(soldir, 'soil.', full.names=T))}
+    }
+
     names(solvar) <- c('soil.1500kPa.mean', 'soil.33kPa.mean', 'soil.ph.mean')
+
+  }
+  if(res>=1000){
+    soil.files <- c('Soil_pH_0cm.tif', 'Soil_pH_mean.tif', 'Soil_pH_200cm.tif',
+                    'Soil_h2o_33kpa_0cm.tif', 'Soil_h2o_33kpa_mean.tif',
+                    'Soil_h2o_33kpa_200cm.tif', 'Soil_h2o_1500kpa_0cm.tif',
+                    'Soil_h2o_1500kpa_mean.tif', 'Soil_h2o_1500kpa_200cm.tif')
+    solvar <- terra::rast(paste(geodir, 'Global\\soils\\1km\\', soil.files, sep=''))
+    names(solvar) <- c('Soil.pH.0cm', 'Soil.pH.mean', 'Soil.pH.200cm',
+                       'Soil.h2o.33.0cm', 'Soil.h2o.33.mean', 'Soil.h2o.33.200cm',
+                       'Soil.h2o.1500.0cm', 'Soil.h2o.1500.mean', 'Soil.h2o.1500.200cm')
+  }
+  solcl <- data.frame(var=names(solvar), cluster='Soil')
   }
 
-  if(res<250){
-    soldir <- paste(geodir, 'USA\\soils\\', res, 'm\\', sep='')
-    if(!dir.exists(soldir)){dir.create(soldir)}
-    if(dir.exists(soldir)){
-      if(length(list.files(soldir))<3){i <- 1
-      for(i in i:terra::nlyr(solvar)){print(i)
-        i.sol <- terra::project(solvar[[i]], base.rast, threads=T)
-        terra::writeRaster(i.sol, filename=paste(soldir, names(solvar)[[i]], '_', res, 'm.tif', sep=''))
+  if(bio==F){biovar <- NULL; biocl <- NULL; biokey <- NULL}
+  if(elev==F){elevvar <- NULL; elevcl <- NULL; elevkey <- NULL}
+  if(gdd==F){gddvar <- NULL; gddcl <- NULL; gddkey <- NULL}
+  if(lc==F){lcvar <- NULL; lccl <- NULL; lckey <- NULL}
+  if(pop==F){popvar <- NULL; popcl <- NULL; popkey <- NULL}
+  if(ptime==F){timevar <- NULL; timecl <- NULL; ptimekey <- NULL}
+  if(rnr==F){rnrvar <- NULL; rnrcl <- NULL; rnrkey <- NULL}
+  if(soil==F){solvar <- NULL; solcl <- NULL; soilkey <- NULL}
+
+  envi <- terra::rast(terra::as.list(c(biovar, elevvar, gddvar, lcvar, popvar, timevar, rnrvar, solvar)))
+  envi.key <- paste(biokey, elevkey, gddkey, lckey, popkey, ptimekey, rnrkey, soilkey, sep='')
+  # if(lc==T){
+  #   lvls.all <- data.frame(id=c(0, 12, 21, 22, 23, 24, 31, 41, 42, 43, 52, 71, 81, 82, 90, 95),
+  #                          landcover=as.factor(c('Water', 'Ice', 'Dev_1', 'Dev_2', 'Dev_3', 'Dev_4', 'Barren', 'Decid', 'Everg',
+  #                                            'Mixed', 'Shrub', 'Grass', 'Pastr', 'Culti', 'WetWdy', 'WetHrb')))
+  #   envi <- terra::categories(envi, value=lvls.all, layer=which(names(envi)=="landcover"))
+  # }
+
+  clst <- rbind(biocl, elevcl, gddcl, lccl, popcl, timecl, rnrcl, solcl)
+  clst$cluster <- as.integer(as.factor(clst$cluster))
+  cl2 <- clst$cluster; names(cl2) <- gsub(' ', '.', clst$var)
+  #return(list('rast'=envi, 'clust'=cl2))
+  envi.out <- list(envi); names(envi.out) <- envi.key
+  return(envi.out)
+  }
+
+  if(soil==T){soilkey <- 'soil'
+  if(res<1000){
+    if(any(grepl('.mean', list.files(paste(geodir, 'USA\\soils\\250m\\', sep=''))))==F){
+      if(any(grepl('.mean', list.files(paste(geodir, 'Global\\soils\\250m\\', sep=''))))==F){
+        var <- c('ph.h2o', '1500kPa', '33kPa'); i <- 1
+        for(i in i:length(type)){
+          sl <- lapply(list.files(path=paste(geodir, 'Global\\soils\\250m\\', sep=''), pattern=var[i], full.names=T), terra::rast)
+          sl.mean <- terra::mean(sl[[1]], sl[[2]], sl[[3]], sl[[4]], sl[[5]], sl[[6]])
+          writeRaster(sl.mean, paste('C:\\Users\\bjselige\\Desktop\\Soil_OpenLandMap\\', var[i], '.mean.tif', sep=''))
+        }
+      }
+      if(any(grepl('.mean', list.files(paste(geodir, 'Global\\soils\\250m\\', sep=''))))){
+        file <- c('ph.mean', '1500kPa.mean', '33kPa.mean'); i <- 1
+        for(i in i:length(file)){
+          sl.mean <- terra::rast(paste(geodir, 'Global\\soils\\250m\\', file[i], '.tif', sep=''))
+          sl.crop <- terra::crop(sl.mean, terra::ext(pops.sdm::l48()))
+          sl.mask <- terra::crop(sl.crop, y=pops.sdm::l48(), mask=T)
+          terra::writeRaster(sl.mask, paste(geodir, 'USA\\soils\\250m\\', file[i], '.tif', sep=''))
+        }
+      }
+    }
+    if(any(grepl('.mean', list.files(paste(geodir, 'USA\\soils\\250m\\', sep=''))))){
+      solvar <- terra::rast(list.files(paste(geodir, 'USA\\soils\\250m\\', sep=''), pattern='.mean.', full.names=T))
+      names(solvar) <- c('soil.1500kPa.mean', 'soil.33kPa.mean', 'soil.ph.mean')
+    }
+
+    if(res<250){
+      soldir <- paste(geodir, 'USA\\soils\\', res, 'm\\', sep='')
+      if(!dir.exists(soldir)){dir.create(soldir)}
+      if(dir.exists(soldir)){
+        if(length(list.files(soldir))<3){i <- 1
+        for(i in i:terra::nlyr(solvar)){print(i)
+          i.sol <- terra::project(solvar[[i]], base.rast, threads=T)
+          terra::writeRaster(i.sol, filename=paste(soldir, names(solvar)[[i]], '_', res, 'm.tif', sep=''))
+        }
+        }
+        if(!length(list.files(soldir))<3){solvar <- terra::rast(list.files(soldir, full.names=T))}
+      }
+    }
+
+    if(res>250){
+      soldir <- paste(geodir, 'USA\\soils\\', res, 'm\\', sep='')
+      if(!dir.exists(soldir)){dir.create(soldir); i <- 1
+      for(i in i:terra::nlyr(solvar)){
+        i.solagg <- terra::aggregate(solvar[[i]], fact=(res/250), fun='mean')
+        i.solagg <- terra::project(solvar[[i]], base.rast, threads=T)
+        terra::writeRaster(i.solagg, filename=paste(soldir, names(solvar)[[i]], '_', res, 'm.tif', sep=''))
       }
       }
-      if(!length(list.files(soldir))<3){solvar <- terra::rast(list.files(soldir, full.names=T))}
+      if(dir.exists(soldir)){solvar <- terra::rast(list.files(soldir, 'soil.', full.names=T))}
     }
+
+    names(solvar) <- c('soil.1500kPa.mean', 'soil.33kPa.mean', 'soil.ph.mean')
+
+  }
+  if(res>=1000){
+    soil.files <- c('Soil_pH_0cm.tif', 'Soil_pH_mean.tif', 'Soil_pH_200cm.tif',
+                    'Soil_h2o_33kpa_0cm.tif', 'Soil_h2o_33kpa_mean.tif',
+                    'Soil_h2o_33kpa_200cm.tif', 'Soil_h2o_1500kpa_0cm.tif',
+                    'Soil_h2o_1500kpa_mean.tif', 'Soil_h2o_1500kpa_200cm.tif')
+    solvar <- terra::rast(paste(geodir, 'Global\\soils\\1km\\', soil.files, sep=''))
+    names(solvar) <- c('Soil.pH.0cm', 'Soil.pH.mean', 'Soil.pH.200cm',
+                       'Soil.h2o.33.0cm', 'Soil.h2o.33.mean', 'Soil.h2o.33.200cm',
+                       'Soil.h2o.1500.0cm', 'Soil.h2o.1500.mean', 'Soil.h2o.1500.200cm')
+  }
+  solcl <- data.frame(var=names(solvar), cluster='Soil')
   }
 
-  if(res>250){
-    soldir <- paste(geodir, 'USA\\soils\\', res, 'm\\', sep='')
-    if(!dir.exists(soldir)){dir.create(soldir); i <- 1
-    for(i in i:terra::nlyr(solvar)){
-      i.solagg <- terra::aggregate(solvar[[i]], fact=(res/250), fun='mean')
-      i.solagg <- terra::project(solvar[[i]], base.rast, threads=T)
-      terra::writeRaster(i.solagg, filename=paste(soldir, names(solvar)[[i]], '_', res, 'm.tif', sep=''))
-    }
-    }
-    if(dir.exists(soldir)){solvar <- terra::rast(list.files(soldir, 'soil.', full.names=T))}
-  }
+  if(bio==F){biovar <- NULL; biocl <- NULL; biokey <- NULL}
+  if(elev==F){elevvar <- NULL; elevcl <- NULL; elevkey <- NULL}
+  if(gdd==F){gddvar <- NULL; gddcl <- NULL; gddkey <- NULL}
+  if(lc==F){lcvar <- NULL; lccl <- NULL; lckey <- NULL}
+  if(pop==F){popvar <- NULL; popcl <- NULL; popkey <- NULL}
+  if(ptime==F){timevar <- NULL; timecl <- NULL; ptimekey <- NULL}
+  if(rnr==F){rnrvar <- NULL; rnrcl <- NULL; rnrkey <- NULL}
+  if(soil==F){solvar <- NULL; solcl <- NULL; soilkey <- NULL}
 
-  names(solvar) <- c('soil.1500kPa.mean', 'soil.33kPa.mean', 'soil.ph.mean')
+  envi <- terra::rast(terra::as.list(c(biovar, elevvar, gddvar, lcvar, popvar, timevar, rnrvar, solvar)))
+  envi.key <- paste(biokey, elevkey, gddkey, lckey, popkey, ptimekey, rnrkey, soilkey, sep='')
+  # if(lc==T){
+  #   lvls.all <- data.frame(id=c(0, 12, 21, 22, 23, 24, 31, 41, 42, 43, 52, 71, 81, 82, 90, 95),
+  #                          landcover=as.factor(c('Water', 'Ice', 'Dev_1', 'Dev_2', 'Dev_3', 'Dev_4', 'Barren', 'Decid', 'Everg',
+  #                                            'Mixed', 'Shrub', 'Grass', 'Pastr', 'Culti', 'WetWdy', 'WetHrb')))
+  #   envi <- terra::categories(envi, value=lvls.all, layer=which(names(envi)=="landcover"))
+  # }
 
-}
-if(res>=1000){
-  soil.files <- c('Soil_pH_0cm.tif', 'Soil_pH_mean.tif', 'Soil_pH_200cm.tif',
-                  'Soil_h2o_33kpa_0cm.tif', 'Soil_h2o_33kpa_mean.tif',
-                  'Soil_h2o_33kpa_200cm.tif', 'Soil_h2o_1500kpa_0cm.tif',
-                  'Soil_h2o_1500kpa_mean.tif', 'Soil_h2o_1500kpa_200cm.tif')
-  solvar <- terra::rast(paste(geodir, 'Global\\soils\\1km\\', soil.files, sep=''))
-  names(solvar) <- c('Soil.pH.0cm', 'Soil.pH.mean', 'Soil.pH.200cm',
-                     'Soil.h2o.33.0cm', 'Soil.h2o.33.mean', 'Soil.h2o.33.200cm',
-                     'Soil.h2o.1500.0cm', 'Soil.h2o.1500.mean', 'Soil.h2o.1500.200cm')
-}
-solcl <- data.frame(var=names(solvar), cluster='Soil')
-}
-
-if(bio==F){biovar <- NULL; biocl <- NULL; biokey <- NULL}
-if(elev==F){elevvar <- NULL; elevcl <- NULL; elevkey <- NULL}
-if(gdd==F){gddvar <- NULL; gddcl <- NULL; gddkey <- NULL}
-if(lc==F){lcvar <- NULL; lccl <- NULL; lckey <- NULL}
-if(pop==F){popvar <- NULL; popcl <- NULL; popkey <- NULL}
-if(ptime==F){timevar <- NULL; timecl <- NULL; ptimekey <- NULL}
-if(rnr==F){rnrvar <- NULL; rnrcl <- NULL; rnrkey <- NULL}
-if(soil==F){solvar <- NULL; solcl <- NULL; soilkey <- NULL}
-
-envi <- terra::rast(terra::as.list(c(biovar, elevvar, gddvar, lcvar, popvar, timevar, rnrvar, solvar)))
-envi.key <- paste(biokey, elevkey, gddkey, lckey, popkey, ptimekey, rnrkey, soilkey, sep='')
-# if(lc==T){
-#   lvls.all <- data.frame(id=c(0, 12, 21, 22, 23, 24, 31, 41, 42, 43, 52, 71, 81, 82, 90, 95),
-#                          landcover=as.factor(c('Water', 'Ice', 'Dev_1', 'Dev_2', 'Dev_3', 'Dev_4', 'Barren', 'Decid', 'Everg',
-#                                            'Mixed', 'Shrub', 'Grass', 'Pastr', 'Culti', 'WetWdy', 'WetHrb')))
-#   envi <- terra::categories(envi, value=lvls.all, layer=which(names(envi)=="landcover"))
-# }
-
-clst <- rbind(biocl, elevcl, gddcl, lccl, popcl, timecl, rnrcl, solcl)
-clst$cluster <- as.integer(as.factor(clst$cluster))
-cl2 <- clst$cluster; names(cl2) <- gsub(' ', '.', clst$var)
-#return(list('rast'=envi, 'clust'=cl2))
-envi.out <- list(envi); names(envi.out) <- envi.key
-return(envi.out)
+  clst <- rbind(biocl, elevcl, gddcl, lccl, popcl, timecl, rnrcl, solcl)
+  clst$cluster <- as.integer(as.factor(clst$cluster))
+  cl2 <- clst$cluster; names(cl2) <- gsub(' ', '.', clst$var)
+  #return(list('rast'=envi, 'clust'=cl2))
+  envi.out <- list(envi); names(envi.out) <- envi.key
+  return(envi.out)
 }
