@@ -13,29 +13,52 @@ run_SDM <- function(spname, domain=world(), res){
   #### 1.0 Load Environmental data and species data ####
   #if(sources(domain)==sources(world())){
   domain <- pops.sdm::l48()
-  domain <- pops.sdm::state(c('Oregon'))
-  #domain <- pops.sdm::e
-  #domain <- pops.sdm::county(state='Oregon', names=c('Coos', 'Curry', 'Douglas', 'Jackson', 'Josephine'))
-  spname <- "Notholithocarpus densiflorus"; myName <- stringr::str_replace(tolower(spname),' ', '_')
-  res <- 33
+  domain <- pops.sdm::state(c('Oregon', 'California'))
+  domain <- pops.sdm::county(state='Oregon', names=c('Coos', 'Curry', 'Douglas', 'Jackson', 'Josephine'))+
+    pops.sdm::county(state='California', names=c('Del Norte', 'Siskiyou', 'Humboldt', 'Trinity', 'Shasta',
+                                                 'Plumas', 'Mendocino', 'Tehama', 'Glenn', 'Butte', 'Lake',
+                                                 'Colusa', 'Sutter', 'Yuba', 'Sierra', 'Nevada', 'Placer',
+                                                 'Sonoma', 'Napa', 'Yolo', 'Sacramento', 'El Dorado', 'Marin',
+                                                 'Amador', 'Alpine','Solano', 'Contra Costa', 'Calaveras',
+                                                 'Tuolumne', 'San Francisco', 'San Mateo', 'San Joaquin',
+                                                 'Alameda',  'Merced', 'Stanislaus', 'Santa Cruz', 'Mariposa',
+                                                 'Santa Clara', 'Monterey', 'San Benito', 'San Luis Obispo',
+                                                 'Santa Barbara', 'Ventura')); res <- 33
+
+  domain <- pops.sdm::getEOR(); res <- 1000
+  spname <- "Notholithocarpus densiflorus"
+
+  myName <- stringr::str_replace(tolower(spname),' ', '_')
   dir <- getwd()
 
-
   #### 1.1 Gather Environmental Data ####
-  envi.vars <- pops.sdm::get_Envi(bio=T, lc=T, ptime=F, soil=T, pop=F, elev=T, res=res)
-  envi.vars <- pops.sdm::get_Envi(bio=T, lc=F, ptime=F, soil=T, pop=F, elev=T, res=250)
+  #envi.vars <- pops.sdm::get_Envi(bio=T, lc=T, ptime=F, soil=T, pop=F, elev=T, res=res)
+  envi <- pops.sdm::get_Envi(bio=T, elev=T, gdd=F, lc=T, pop=F, ptime=F, rnr=F, soil=F, tbase=5, res=res)
   base.r <- terra::crop(x=pops.sdm::rasterbase(res=res), y=domain, mask=T)
   base.r <- terra::subst(base.r, from=0, to=NA)
 
-  if(res>250){envi.r <- terra::crop(x=envi.vars$rast, y=domain, mask=T); envi.r <- envi.r*base.r}
+  if(res>250){
+    envi.r <- terra::crop(x=envi[[1]], y=domain, mask=T)
+    envi.r <- envi.r*base.r
+    envi.cl <- pops.sdm::get_Clusters(envi.r)
+    envi.vars <- list(envi.r, envi.cl$cluster); names(envi.vars) <- c('rast', 'clust')
+  }
   if(res<=250){
-    if(!file.exists(paste(dir, '/envi/envi.', terra::nrow(base.r), terra::ncol(base.r), terra::nlyr(envi.vars$rast), '.tif', sep=''))){
-      envi.r <- terra::crop(x=envi.vars$rast, y=domain, mask=T)
+    if(!file.exists(paste(dir, '/envi/envi.', terra::nrow(base.r), terra::ncol(base.r), terra::nlyr(envi[[1]]), '.tif', sep=''))){
+
+      for(i in i:terra::nlyr(envi[[1]])){print(i)
+        envi.i <- terra::crop(x=envi[[1]][[i]], y=terra::ext(domain))
+        if(i==1){envi.r <- envi.i}
+        if(i>1){envi.r <- c(envi.r, envi.i)}
+      }
+
       envi.r <- envi.r*base.r
+      envi.cl <- pops.sdm::get_Clusters(envi.r)
+      envi.vars <- list(envi.r, envi.cl$cluster); names(envi.vars) <- c('rast', 'clust')
       terra::writeRaster(envi.r, paste(dir, '/envi/envi.', terra::nrow(base.r), terra::ncol(base.r), terra::nlyr(envi.vars$rast), '.tif', sep=''))
     }
     if(file.exists(paste(dir, '/envi/envi.', terra::nrow(base.r), terra::ncol(base.r), terra::nlyr(envi.vars$rast), '.tif', sep=''))){
-      envi.r <- terra::rast(paste(dir, '/envi/envi.', terra::nrow(base.r), terra::ncol(base.r), terra::nlyr(envi.vars$rast), '.tif', sep=''))
+      envi.r <- terra::rast(paste(dir, '/envi/envi.', terra::nrow(base.r), terra::ncol(base.r), terra::nlyr(envi[[1]]), '.tif', sep=''))
     }
   }
 
@@ -46,40 +69,44 @@ run_SDM <- function(spname, domain=world(), res){
   pts.v <- terra::values(pts.r)
   pts.t <- which(pts.v==1)
   pts.f <- which(pts.v==0)
-  #pts.s <- sample(x=pts.f, size=length(pts.t))
+  pts.s <- sample(x=pts.f, size=length(pts.t))
   #myResp <- pts.v[c(pts.t, pts.s)]; myResp[myResp==0] <- NA
-  #myXY <- terra::xyFromCell(object=pts.r, cell=c(pts.t, pts.s))
+  myXY <- terra::xyFromCell(object=pts.r, cell=c(pts.t, pts.s))
 
-  if("landcover"%in%names(envi.r)){
-    myExtr <- terra::extract(envi.r$landcover, myXY)
-    lvls.in <- unique(myExtr$landcover)
-    lvls.all <- data.frame(id=c(12, 21, 22, 23, 24, 31, 41, 42, 43, 52, 71, 81, 82, 90, 95),
-                           landcover=as.factor(c('Ice', 'Dev_1', 'Dev_2', 'Dev_3', 'Dev_4', 'Barren', 'Decid', 'Everg',
-                                                 'Mixed', 'Shrub', 'Grass', 'Pastr', 'Culti', 'WetWdy', 'WetHrb')))
-    if(length(lvls.in)<nrow(lvls.all)){
-      lvls.no <- lvls.all$id[which((lvls.all$id%in%lvls.in)==F)]
-      envi.r$landcover <- terra::subst(envi.r$landcover, from=lvls.no, to=NA)
-      lvls.all <- lvls.all[which(lvls.all$id!=lvls.no),]
-    }
-    envi.r <- terra::categories(envi.r, value=lvls.all, layer=which(names(envi.r)=="landcover"))
-  }
+  # if("landcover"%in%names(envi.vars[[1]])){
+  #   myExtr <- terra::extract(envi.r$landcover, myXY)
+  #   lvls.in <- unique(myExtr$landcover)
+  #   lvls.all <- data.frame(id=c(12, 21, 22, 23, 24, 31, 41, 42, 43, 52, 71, 81, 82, 90, 95),
+  #                          landcover=as.factor(c('Ice', 'Dev_1', 'Dev_2', 'Dev_3', 'Dev_4', 'Barren', 'Decid', 'Everg',
+  #                                                'Mixed', 'Shrub', 'Grass', 'Pastr', 'Culti', 'WetWdy', 'WetHrb')))
+  #   if(length(lvls.in)<nrow(lvls.all)){
+  #     lvls.no <- lvls.all$id[which((lvls.all$id%in%lvls.in)==F)]
+  #     envi.r$landcover <- terra::subst(envi.r$landcover, from=lvls.no, to=NA)
+  #     lvls.all <- lvls.all[which(lvls.all$id!=lvls.no),]
+  #   }
+  #   envi.vars[[1]] <- terra::categories(envi.vars[[1]], value=lvls.all, layer=which(names(envi.r)=="landcover"))
+  # }
 
+  best.dir <- paste(dir, '/envi/envibest.', myName, '.', res, '.', names(envi), '.', terra::nrow(base.r), terra::ncol(base.r), '.tif', sep='')
   #### 2.0 Run variable selection function to choose the ideal variables ####
-  # if(!file.exists(paste(dir, '/envi/envi.best', terra::nrow(base.r), terra::ncol(base.r), terra::nlyr(envi.vars$rast), '.tif', sep=''))){
-  envi.best <- pops.sdm::get_BestVars(envi=envi.r, pts=pts.r, clust=envi.vars$clust)
-  terra::writeRaster(envi.best, paste(dir, '/envi/envi.best_', spname, '_', terra::nrow(base.r), terra::ncol(base.r), terra::nlyr(envi.vars$rast), '.tif', sep=''))
-  # }
-  # if(file.exists(paste(dir, '/envi/envi.best', terra::nrow(base.r), terra::ncol(base.r), terra::nlyr(envi.vars$rast), '.tif', sep=''))){
-  #   envi.best <- raster::stack(terra::rast(paste(dir, '/envi/envi.best', terra::nrow(base.r), terra::ncol(base.r), terra::nlyr(envi.vars$rast), '.tif', sep='')))
-  # }
+  if(!file.exists(best.dir)){
+    envi.best <- pops.sdm::get_BestVars(envi=envi.vars$rast, pts=pts.r, clust=envi.vars$clust)
+    terra::writeRaster(envi.best, best.dir)
+  }
+  if(file.exists(best.dir)){
+    envi.best <- raster::stack(terra::rast(best.dir))
+  }
 
   pts.2 <- pts.r!=is.na(pts.r)
   myResp <- terra::values(pts.2)
   myPA <- ifelse(myResp == 1, TRUE, FALSE)
-  myPAtable <- data.frame(PA1 = myPA, PA2 = myPA, PA3 = myPA)#, PA4 = myPA, PA5 = myPA)
+  myPAtable <- data.frame(PA1 = myPA, PA2 = myPA, PA3 = myPA)
   pa.x <- vector()
   for (i in 1:ncol(myPAtable)){
-    pa.s <- sample(which(myPAtable[, i] == FALSE), length(pts.t)*3)
+    if(length(pts.t)<3333){npa <- length(pts.t)*3}
+    if(length(pts.t)>3333&&length(pts.t)<=10000){npa <- 10000}
+    if(length(pts.t)>10000){npa <- length(pts.t)}
+    pa.s <- sample(which(myPAtable[, i] == FALSE), npa)
     myPAtable[pa.s, i] <- TRUE
     pa.x <- c(pa.x, pa.s)
   }
@@ -111,11 +138,11 @@ run_SDM <- function(spname, domain=world(), res){
                                        modeling.id = paste(myName,"AllModels",sep=""),
                                        models = myAlgos,
                                        bm.options = myOptions,
-                                       CV.strategy = 'random',
+                                       # CV.strategy = 'random',
                                        CV.nb.rep = 3,
-                                       CV.perc = .67,
+                                       CV.perc = .75,
                                        # CV.strategy='kfold',
-                                       # CV.k=5,
+                                       # CV.k=4,
                                        metric.eval = myEvals,
                                        var.import = 0,
                                        #SaveObj = T,
@@ -130,7 +157,6 @@ run_SDM <- function(spname, domain=world(), res){
                                        # new.env.xy = envi.xy,
                                        proj.name = 'current',
                                        models.chosen = myModels@models.computed,
-                                       #models.chosen = mysub,
                                        #compress = 'xz',
                                        build.clamping.mask = F,
                                        binary.meth = NULL)
@@ -143,14 +169,7 @@ run_SDM <- function(spname, domain=world(), res){
                                                  em.by = 'all', #'all' combines all algos and PA runs into a single ensemble.
                                                  metric.eval = 'TSS', #only mean.weight and committee averaging use this argument, leaving it as 'TSS' is faster
                                                  metric.select = 'TSS',
-                                                 #models.eval.meth = myEvals,
                                                  em.algo = c('EMwmean', "EMcv", 'EMci', 'EMca'))
-  # prob.mean = T,
-  # prob.cv = T,
-  # prob.ci = T, prob.ci.alpha = 0.05,
-  #prob.median = F, prob.mean.weight = T,
-  #prob.mean.weight.decay = 'proportional',
-  #committee.averaging = T)
   myEvalEM <- biomod2::get_evaluations(myEnsemble) # get evaluation scores
 
   myProjEM <- biomod2::BIOMOD_EnsembleForecasting(bm.em = myEnsemble,
@@ -162,20 +181,19 @@ run_SDM <- function(spname, domain=world(), res){
                                                   metric.filter='TSS',
                                                   build.clamping.mask = F)
 
-
   ##### 5. Thresholding
-  myBinary <- plyr::llply(.data=c(1:length(myEvals)),
-                          .fun=function(X){X.Eval <- myEvals[[X]]
-                          X.Binary <- raster::stack(paste(tolower(stringr::str_replace(spname, ' ', '.')),
-                                                          '\\proj_current\\proj_current_',
-                                                          tolower(stringr::str_replace(spname, ' ', '.')),
-                                                          '_', X.Eval, 'bin.grd', sep=''))
-                          return(X.Binary)}); myBinary <- raster::stack(unlist(myBinary))
+  # myBinary <- plyr::llply(.data=c(1:length(myEvals)),
+  #                         .fun=function(X){X.Eval <- myEvals[[X]]
+  #                         X.Binary <- raster::stack(paste(tolower(stringr::str_replace(spname, ' ', '.')),
+  #                                                         '\\proj_current\\proj_current_',
+  #                                                         tolower(stringr::str_replace(spname, ' ', '.')),
+  #                                                         '_', X.Eval, 'bin.grd', sep=''))
+  #                         return(X.Binary)}); myBinary <- raster::stack(unlist(myBinary))
+  #
+  # myBinaryEM <- raster::stack(paste(tolower(stringr::str_replace(spname, ' ', '.')), '\\proj_current\\proj_current_',
+  #                                   tolower(stringr::str_replace(spname, ' ', '.')), '_ensemble_', myEvals[[1]], 'bin.grd', sep=''))
 
-  myBinaryEM <- raster::stack(paste(tolower(stringr::str_replace(spname, ' ', '.')), '\\proj_current\\proj_current_',
-                                    tolower(stringr::str_replace(spname, ' ', '.')), '_ensemble_', myEvals[[1]], 'bin.grd', sep=''))
-
-  p2 <- p.out$mean; p2.min <- min(terra::values(p2),na.rm=T); p2.max <- max(terra::values(p2),na.rm=T)
+  p2 <- terra::unwrap(myProjEM@proj.out@val)[[1]]; p2.min <- min(terra::values(p2),na.rm=T); p2.max <- max(terra::values(p2),na.rm=T)
   trs <- seq(p2.min, p2.max, by=((p2.max-p2.min)/100))
 
   trs.metrics <- plyr::ldply(.data=c(1:length(trs)),
@@ -188,34 +206,39 @@ run_SDM <- function(spname, domain=world(), res){
                                return(df.out)}, .progress = 'text')
 
   tr.best <- trs.metrics[which.max(trs.metrics$score),]
-  p.tr <- p.out$mean>tr.best$trs
+  p.tr <- p2[[1]]>tr.best$trs
 
 
   #### Finishing and outputs
-  EM.mean <- raster::mean(myProjEM@proj@val[[which(grepl('EMmean', names(myProjEM@proj@val)))]])
-  EM.cv <- raster::mean(myProjEM@proj@val[[which(grepl('EMcv', names(myProjEM@proj@val)))]])
+  myProjEM2 <- terra::unwrap(myProjEM@proj.out@val)
+  EM.mean <- myProjEM2$test_EMwmeanByTSS_mergedData_mergedRun_mergedAlgo
+  EM.cv <- myProjEM2$test_EMcvByTSS_mergedData_mergedRun_mergedAlgo
   EM.sd <- (EM.cv*EM.mean)/100 #EM.sd <- raster::calc(x=myProj@proj@val, fun=sd, na.rm=T)
-  EM.ciInf <- raster::mean(myProjEM@proj@val[[which(grepl('EMciInf', names(myProjEM@proj@val)))]])
-  EM.ciSup <- raster::mean(myProjEM@proj@val[[which(grepl('EMciSup', names(myProjEM@proj@val)))]])
-  EM.ca <- raster::mean(myProjEM@proj@val)
-  p.out <- raster::stack(EM.mean, EM.cv, EM.sd, EM.ca, EM.ciInf, EM.ciSup)
+  EM.ciInf <- myProjEM2$test_EMciInfByTSS_mergedData_mergedRun_mergedAlgo
+  EM.ciSup <- myProjEM2$test_EMciSupByTSS_mergedData_mergedRun_mergedAlgo
+  EM.ca <- myProjEM2$test_EMcaByTSS_mergedData_mergedRun_mergedAlgo
+  p.out <- c(EM.mean, EM.cv, EM.sd, EM.ca, EM.ciInf, EM.ciSup)
   names(p.out) <- c('mean', 'cv', 'sd', 'ca', 'ciInf', 'ciSup')
 
-  p3 <- raster::stack((p.out$mean), (p.tr)); names(p3) <- c('Raw', 'Binary')
+  p3 <- c((p.out$mean), (p.tr)); names(p3) <- c('Raw', 'Binary')
   myEval2 <- list('All'=myEval, 'Ensemble'=myEvalEM, 'trs.metrics'=list('best'=tr.best$trs, 'full'=trs.metrics))
   outlist <- list('Data'=myData, 'Model'=myModels, 'Evaluation'=myEval2, 'Projections'=list('All'=myProj2, 'Ensemble'=p3))
 
-
-  meta.df <- data.frame(spname=spname, #extent='extent',
+  meta.df <- cbind(list(spname=spname, #extent='extent',
                         resolution=res,
                         n.points=length(pts.1),
+                        n.psuedoabs=npa,
+                        n.pa.reps=ncol(myPAtable),
+                        n.cv.reps=length(unique(myEval$run)),
                         sources=c('GBIF', 'BIEN'),
                         best.vars=names(envi.best),
-                        all.vars=names(envi.vars),
+                        all.vars=names(envi.vars$rast),
                         algorithmns=myAlgos,
-                        tss=myEvals,
-                        weights='weights',
-                        threshold=tr.best$trs)
+                        eval.metrics=myEvals,
+                        #weights='weights',
+                        threshold=tr.best$trs))
+  write.csv(meta.df, paste(dir, '/', spname, 'meta.df.csv', sep=''))
+  terra::writeRaster(p.out, paste(dir, '/', spname, '.output.tif', sep=''))
   return(outlist)
 }
 
