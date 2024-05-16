@@ -17,7 +17,7 @@ get_Clusters <- function(envi, n=NULL, samp=NULL){
   if(is.null(samp)){
     envi.df2 <- terra::values(envi, na.rm=T, dataframe=T)
   }
-  envi.cc <- klaR::corclust(x=envi.df2, method='complete') #envi.pl <- plot(envi.cc, mincor=.7, selection='numeric')
+  envi.cc <- klaR::corclust(x=envi.df, method='complete') #envi.pl <- plot(envi.cc, mincor=.7, selection='numeric')
   if(!is.null(n)){envi.tr <- klaR::cvtree(envi.cc, k=n)}
   if(is.null(n)){envi.tr <- klaR::cvtree(envi.cc, mincor=.1)}
   return(envi.tr)
