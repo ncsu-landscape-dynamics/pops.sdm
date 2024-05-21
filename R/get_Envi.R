@@ -248,14 +248,11 @@ get_Envi <- function(bio=F, elev=F, gdd=F, lc=F, pop=F, ptime=F, rnr=F, soil=F, 
     }
     if(file.exists(paste(geodir, 'USA\\landcover\\', 'nlcd_2019_land_cover_l48_20210604_1s.tif', sep=''))){
       lcvar <- terra::rast(paste(lcpath, 'nlcd_2019_land_cover_l48_20210604_1s.tif', sep=''))
-
       lvls.all <- data.frame(id=c(12, 21, 22, 23, 24, 31, 41, 42, 43, 52, 71, 81, 82, 90, 95),
                              landcover=as.factor(c('Ice', 'Dev_1', 'Dev_2', 'Dev_3', 'Dev_4', 'Barren', 'Decid', 'Everg',
                                                    'Mixed', 'Shrub', 'Grass', 'Pastr', 'Culti', 'WetWdy', 'WetHrb')))
 
       lcvar <- terra::categories(lcvar, value=lvls.all)
-
-
       names(lcvar) <- 'landcover'
     }
 
