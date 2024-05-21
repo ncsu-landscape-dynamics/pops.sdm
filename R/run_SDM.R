@@ -45,15 +45,29 @@ run_SDM <- function(spname, domain=world(), res){
   }
   if(res<=250){
     if(!file.exists(paste(dir, '/envi/envi.', terra::nrow(base.r), terra::ncol(base.r), terra::nlyr(envi[[1]]), '.tif', sep=''))){
-
+      i <- 1
       for(i in i:terra::nlyr(envi[[1]])){print(i)
         envi.i <- terra::crop(x=envi[[1]][[i]], y=terra::ext(domain))
         if(i==1){envi.r <- envi.i}
         if(i>1){envi.r <- c(envi.r, envi.i)}
       }
-
       envi.r <- envi.r*base.r
+
+      if(grepl('land', names(envi))){
+      lvls.all <- data.frame(id=c(12, 21, 22, 23, 24, 31, 41, 42, 43, 52, 71, 81, 82, 90, 95),
+                             landcover=as.factor(c('Ice', 'Dev_1', 'Dev_2', 'Dev_3', 'Dev_4', 'Barren', 'Decid', 'Everg',
+                                                   'Mixed', 'Shrub', 'Grass', 'Pastr', 'Culti', 'WetWdy', 'WetHrb')))
+      lcvar <- which(names(envi[[1]])=='landcover')
+      envi[[1]][[lcvar]] <- terra::categories(envi[[1]][[lcvar]], value=lvls.all)
+      }
+
       envi.cl <- pops.sdm::get_Clusters(envi.r)
+
+      if(grepl('land', names(envi))){
+        names(envi.tr$cluster)[which(is.na(names(envi.tr$cluster)))] <- 'landcover'
+        envi.tr$cluster[which(names(envi.tr$cluster)=='landcover')] <- max(envi.tr$cluster)+1
+      }
+
       envi.vars <- list(envi.r, envi.cl$cluster); names(envi.vars) <- c('rast', 'clust')
       terra::writeRaster(envi.r, paste(dir, '/envi/envi.', terra::nrow(base.r), terra::ncol(base.r), terra::nlyr(envi.vars$rast), '.tif', sep=''))
     }
