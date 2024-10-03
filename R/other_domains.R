@@ -7,7 +7,7 @@ getEOM <-function(){
                            'Mississippi', 'Alabama',
                            'Florida', 'Georgia',
                            'South Carolina', 'North Carolina',
-                           'Virginia', 'West Virgina',
+                           'Virginia', 'West Virginia',
                            'Maryland', 'District of Columbia',
                            'Delaware', 'Pennsylvania',
                            'New Jersey', 'New York',
