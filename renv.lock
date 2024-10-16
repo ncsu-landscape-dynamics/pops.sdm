@@ -4,7 +4,7 @@
     "Repositories": [
       {
         "Name": "CRAN",
-        "URL": "https://cran.rstudio.com"
+        "URL": "https://cloud.r-project.org"
       }
     ]
   },
@@ -593,6 +593,20 @@
         "rlang"
       ],
       "Hash": "bb0eec2fe32e88d9e2836c2f73ea2077"
+    },
+    "exactextractr": {
+      "Package": "exactextractr",
+      "Version": "0.9.1",
+      "Source": "Repository",
+      "Repository": "CRAN",
+      "Requirements": [
+        "R",
+        "Rcpp",
+        "methods",
+        "raster",
+        "sf"
+      ],
+      "Hash": "146d8a90d297c46e9ac4b9cad4643124"
     },
     "fansi": {
       "Package": "fansi",
@@ -1334,7 +1348,7 @@
     },
     "raster": {
       "Package": "raster",
-      "Version": "3.6-14",
+      "Version": "3.6-20",
       "Source": "Repository",
       "Repository": "CRAN",
       "Requirements": [
@@ -1344,7 +1358,7 @@
         "sp",
         "terra"
       ],
-      "Hash": "2406e2380237f4dcf84e83260419895a"
+      "Hash": "ebebd9f0f203a129eb2da96470191b82"
     },
     "readr": {
       "Package": "readr",
@@ -1402,22 +1416,6 @@
         "stringr"
       ],
       "Hash": "bb5996d0bd962d214a11140d77589917"
-    },
-    "rgdal": {
-      "Package": "rgdal",
-      "Version": "1.6-4",
-      "Source": "Repository",
-      "Repository": "CRAN",
-      "Requirements": [
-        "R",
-        "grDevices",
-        "graphics",
-        "methods",
-        "sp",
-        "stats",
-        "utils"
-      ],
-      "Hash": "92183bff0bac3a711fde35a22c1bf45b"
     },
     "rinat": {
       "Package": "rinat",
@@ -1618,7 +1616,7 @@
     },
     "sp": {
       "Package": "sp",
-      "Version": "2.1-2",
+      "Version": "1.6-0",
       "Source": "Repository",
       "Repository": "CRAN",
       "Requirements": [
@@ -1631,7 +1629,7 @@
         "stats",
         "utils"
       ],
-      "Hash": "40a9887191d33b2521a1d741f8c8aea2"
+      "Hash": "6674e075a078d9c3bde8ba800367347c"
     },
     "stringi": {
       "Package": "stringi",
@@ -1707,7 +1705,7 @@
     },
     "terra": {
       "Package": "terra",
-      "Version": "1.6-53",
+      "Version": "1.7-23",
       "Source": "Repository",
       "Repository": "CRAN",
       "Requirements": [
@@ -1715,7 +1713,7 @@
         "Rcpp",
         "methods"
       ],
-      "Hash": "3bd9337c86c21c0f6d15ebecc6cb0ea9"
+      "Hash": "19502c7522254190a8a93e6dffa59ed7"
     },
     "tibble": {
       "Package": "tibble",
