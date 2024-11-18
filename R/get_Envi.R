@@ -237,25 +237,25 @@ get_Envi <- function(bio=F, elev=F, gdd=F, lc=F, pop=F, ptime=F, rnr=F, soil=F, 
     #                       paste(lcpath, '\\nlcd_2019_1s_cropl_82.tif', sep=''),
     #                       paste(lcpath, '\\nlcd_2019_1s_culti_81_82.tif', sep=''),
     #                       paste(lcpath, '\\nlcd_2019_1s_wetld_90_95.tif', sep=''))))){
-    if(!file.exists(paste(lcpath, 'nlcd_2019_land_cover_l48_20210604_1s.tif', sep=''))){
-      lc30 <- terra::rast(paste(lcpath, 'nlcd_2019_land_cover_l48_20210604.tif', sep=''))
-      lcbase <- pops.sdm::rasterbase(res=33)
-      lc1s <- terra::project(lc30, lcbase, method='near', threads=T)
-      # lc30.p <- terra::project(lc30, "epsg:4326", method='near', threads=T)
-      # lc30.c <- terra::crop(lc30.p, terra::ext(pops.sdm::l48()))
-      # lc30.m <- terra::crop(lc30.m, y=pops.sdm::l48(), mask=T)
-      terra::writeRaster(lc1s, paste(lcpath, 'nlcd_2019_land_cover_l48_20210604_1s.tif', sep=''))
+    if(res==33){
+      if(!file.exists(paste(lcpath, 'nlcd_2019_land_cover_l48_20210604_1s.tif', sep=''))){
+        lc30 <- terra::rast(paste(lcpath, 'nlcd_2019_land_cover_l48_20210604.tif', sep=''))
+        lcbase <- pops.sdm::rasterbase(res=33)
+        lc1s <- terra::project(lc30, lcbase, method='near', threads=T)
+        # lc30.p <- terra::project(lc30, "epsg:4326", method='near', threads=T)
+        # lc30.c <- terra::crop(lc30.p, terra::ext(pops.sdm::l48()))
+        # lc30.m <- terra::crop(lc30.m, y=pops.sdm::l48(), mask=T)
+        terra::writeRaster(lc1s, paste(lcpath, 'nlcd_2019_land_cover_l48_20210604_1s.tif', sep=''))
+      }
+      if(file.exists(paste(geodir, 'USA\\landcover\\', 'nlcd_2019_land_cover_l48_20210604_1s.tif', sep=''))){
+        lcvar <- terra::rast(paste(lcpath, 'nlcd_2019_land_cover_l48_20210604_1s.tif', sep=''))
+        lvls.all <- data.frame(id=c(12, 21, 22, 23, 24, 31, 41, 42, 43, 52, 71, 81, 82, 90, 95),
+                               landcover=as.factor(c('Ice', 'Dev_1', 'Dev_2', 'Dev_3', 'Dev_4', 'Barren', 'Decid', 'Everg',
+                                                     'Mixed', 'Shrub', 'Grass', 'Pastr', 'Culti', 'WetWdy', 'WetHrb')))
+        lcvar <- terra::categories(lcvar, value=lvls.all)
+        names(lcvar) <- 'landcover'
+      }
     }
-    if(file.exists(paste(geodir, 'USA\\landcover\\', 'nlcd_2019_land_cover_l48_20210604_1s.tif', sep=''))){
-      lcvar <- terra::rast(paste(lcpath, 'nlcd_2019_land_cover_l48_20210604_1s.tif', sep=''))
-      lvls.all <- data.frame(id=c(12, 21, 22, 23, 24, 31, 41, 42, 43, 52, 71, 81, 82, 90, 95),
-                             landcover=as.factor(c('Ice', 'Dev_1', 'Dev_2', 'Dev_3', 'Dev_4', 'Barren', 'Decid', 'Everg',
-                                                   'Mixed', 'Shrub', 'Grass', 'Pastr', 'Culti', 'WetWdy', 'WetHrb')))
-
-      lcvar <- terra::categories(lcvar, value=lvls.all)
-      names(lcvar) <- 'landcover'
-    }
-
     if(res>33){
       if(res==100){
         if(!file.exists(paste(lcpath, 'ncldvars_2019_3s.tif', sep=''))){
@@ -264,7 +264,6 @@ get_Envi <- function(bio=F, elev=F, gdd=F, lc=F, pop=F, ptime=F, rnr=F, soil=F, 
         }
         if(file.exists(paste(lcpath, 'ncldvars_2019_3s.tif', sep=''))){
           lcvar <- terra::rast(paste(lcpath, 'ncldvars_2019_3s.tif', sep=''))
-          names(lcvar) <- 'landcover'
         }
       }
       if(res==500){
